@@ -22,11 +22,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import org.apache.geode.distributed.internal.DistributionConfig;
 import org.apache.geode.security.GemFireSecurityException;
-import org.apache.geode.security.TestPostProcessor;
 import org.apache.geode.security.TestSecurityManager;
-import org.apache.geode.security.SimpleTestSecurityManager;
 import org.apache.geode.test.junit.categories.UnitTest;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.DefaultSecurityManager;
@@ -38,16 +39,24 @@ import org.junit.experimental.categories.Category;
 import java.util.Properties;
 
 @Category(UnitTest.class)
-public class IntegratedSecurityServiceTest {
+public class SecurityServiceTest {
 
   private Properties properties;
+  private DistributionConfig distributionConfig;
   private SecurityService securityService;
 
   @Before
   public void before() {
-    properties = new Properties();
-    securityService = SecurityService.getSecurityService();
-    securityService.initSecurity(properties);
+    this.properties = new Properties();
+    this.distributionConfig = mock(DistributionConfig.class);
+    when(this.distributionConfig.getSecurityProps()).thenReturn(this.properties);
+    this.securityService = SecurityServiceFactory.create(null, this.distributionConfig);
+  }
+
+  @After
+  public void after() throws Exception {
+    this.securityService.close();
+    SecurityUtils.setSecurityManager(null);
   }
 
   @Test
@@ -97,109 +106,105 @@ public class IntegratedSecurityServiceTest {
   @Test
   public void testInitialSecurityFlags() {
     // initial state of IntegratedSecurityService
-    assertFalse(securityService.isIntegratedSecurity());
-    assertFalse(securityService.isClientSecurityRequired());
-    assertFalse(securityService.isPeerSecurityRequired());
+    assertFalse(this.securityService.isIntegratedSecurity());
+    assertFalse(this.securityService.isClientSecurityRequired());
+    assertFalse(this.securityService.isPeerSecurityRequired());
   }
 
   @Test
   public void testInitWithSecurityManager() {
-    properties.setProperty(SECURITY_MANAGER, "org.apache.geode.security.TestSecurityManager");
-    properties.setProperty(TestSecurityManager.SECURITY_JSON,
+    this.properties.setProperty(SECURITY_MANAGER, "org.apache.geode.security.TestSecurityManager");
+    this.properties.setProperty(TestSecurityManager.SECURITY_JSON,
         "org/apache/geode/security/templates/security.json");
 
-    securityService.initSecurity(properties);
+    this.securityService = SecurityServiceFactory.create(null, this.distributionConfig);
 
-    assertTrue(securityService.isIntegratedSecurity());
-    assertTrue(securityService.isClientSecurityRequired());
-    assertTrue(securityService.isPeerSecurityRequired());
+    assertTrue(this.securityService.isIntegratedSecurity());
+    assertTrue(this.securityService.isClientSecurityRequired());
+    assertTrue(this.securityService.isPeerSecurityRequired());
   }
 
   @Test
   public void testInitWithClientAuthenticator() {
-    properties.setProperty(SECURITY_CLIENT_AUTHENTICATOR, "org.abc.test");
+    this.properties.setProperty(SECURITY_CLIENT_AUTHENTICATOR, "org.abc.test");
+    this.securityService = SecurityServiceFactory.create(null, this.distributionConfig);
 
-    securityService.initSecurity(properties);
-    assertFalse(securityService.isIntegratedSecurity());
-    assertTrue(securityService.isClientSecurityRequired());
-    assertFalse(securityService.isPeerSecurityRequired());
+    assertFalse(this.securityService.isIntegratedSecurity());
+    assertTrue(this.securityService.isClientSecurityRequired());
+    assertFalse(this.securityService.isPeerSecurityRequired());
   }
 
   @Test
   public void testInitWithPeerAuthenticator() {
-    properties.setProperty(SECURITY_PEER_AUTHENTICATOR, "org.abc.test");
+    this.properties.setProperty(SECURITY_PEER_AUTHENTICATOR, "org.abc.test");
+    this.securityService = SecurityServiceFactory.create(null, this.distributionConfig);
 
-    securityService.initSecurity(properties);
-
-    assertFalse(securityService.isIntegratedSecurity());
-    assertFalse(securityService.isClientSecurityRequired());
-    assertTrue(securityService.isPeerSecurityRequired());
+    assertFalse(this.securityService.isIntegratedSecurity());
+    assertFalse(this.securityService.isClientSecurityRequired());
+    assertTrue(this.securityService.isPeerSecurityRequired());
   }
 
   @Test
   public void testInitWithAuthenticators() {
-    properties.setProperty(SECURITY_CLIENT_AUTHENTICATOR, "org.abc.test");
-    properties.setProperty(SECURITY_PEER_AUTHENTICATOR, "org.abc.test");
+    this.properties.setProperty(SECURITY_CLIENT_AUTHENTICATOR, "org.abc.test");
+    this.properties.setProperty(SECURITY_PEER_AUTHENTICATOR, "org.abc.test");
 
-    securityService.initSecurity(properties);
+    this.securityService = SecurityServiceFactory.create(null, this.distributionConfig);
 
-    assertFalse(securityService.isIntegratedSecurity());
-    assertTrue(securityService.isClientSecurityRequired());
-    assertTrue(securityService.isPeerSecurityRequired());
+    assertFalse(this.securityService.isIntegratedSecurity());
+    assertTrue(this.securityService.isClientSecurityRequired());
+    assertTrue(this.securityService.isPeerSecurityRequired());
   }
 
   @Test
   public void testInitWithShiroAuthenticator() {
-    properties.setProperty(SECURITY_SHIRO_INIT, "shiro.ini");
+    this.properties.setProperty(SECURITY_SHIRO_INIT, "shiro.ini");
 
-    securityService.initSecurity(properties);
+    this.securityService = SecurityServiceFactory.create(null, this.distributionConfig);
 
-    assertTrue(securityService.isIntegratedSecurity());
-    assertTrue(securityService.isClientSecurityRequired());
-    assertTrue(securityService.isPeerSecurityRequired());
+    assertTrue(this.securityService.isIntegratedSecurity());
+    assertTrue(this.securityService.isClientSecurityRequired());
+    assertTrue(this.securityService.isPeerSecurityRequired());
   }
 
   @Test
   public void testNoInit() {
-    assertFalse(securityService.isIntegratedSecurity());
+    assertFalse(this.securityService.isIntegratedSecurity());
   }
 
   @Test
   public void testInitWithOutsideShiroSecurityManager() {
     SecurityUtils.setSecurityManager(new DefaultSecurityManager());
-    securityService.initSecurity(properties);
-    assertTrue(securityService.isIntegratedSecurity());
+    this.securityService = SecurityServiceFactory.create(null, this.distributionConfig);
+
+    assertTrue(this.securityService.isIntegratedSecurity());
   }
 
-  @Test
-  public void testSetSecurityManager() {
-    // initially
-    assertFalse(securityService.isIntegratedSecurity());
-
-    // init with client authenticator
-    properties.setProperty(SECURITY_CLIENT_AUTHENTICATOR, "org.abc.test");
-    securityService.initSecurity(properties);
-    assertFalse(securityService.isIntegratedSecurity());
-    assertTrue(securityService.isClientSecurityRequired());
-    assertFalse(securityService.isPeerSecurityRequired());
-
-    // set a security manager
-    securityService.setSecurityManager(new SimpleTestSecurityManager());
-    assertTrue(securityService.isIntegratedSecurity());
-    assertTrue(securityService.isClientSecurityRequired());
-    assertTrue(securityService.isPeerSecurityRequired());
-    assertFalse(securityService.needPostProcess());
-
-    // set a post processor
-    securityService.setPostProcessor(new TestPostProcessor());
-    assertTrue(securityService.isIntegratedSecurity());
-    assertTrue(securityService.needPostProcess());
-  }
-
-  @After
-  public void after() {
-    securityService.close();
-  }
+  // @Test
+  // public void testSetSecurityManager() {
+  // // initially
+  // assertFalse(this.securityService.isIntegratedSecurity());
+  //
+  // // init with client authenticator
+  // this.properties.setProperty(SECURITY_CLIENT_AUTHENTICATOR, "org.abc.test");
+  // this.securityService = SecurityServiceFactory.create(null, this.distributionConfig);
+  //
+  // assertFalse(this.securityService.isIntegratedSecurity());
+  // assertTrue(this.securityService.isClientSecurityRequired());
+  // assertFalse(this.securityService.isPeerSecurityRequired());
+  //
+  // // set a security manager
+  // this.securityService.setSecurityManager(new SimpleTestSecurityManager());
+  // assertTrue(this.securityService.isIntegratedSecurity());
+  // assertTrue(this.securityService.isClientSecurityRequired());
+  // assertTrue(this.securityService.isPeerSecurityRequired());
+  // assertFalse(this.securityService.needPostProcess());
+  //
+  // // set a post processor
+  // this.securityService.setPostProcessor(new TestPostProcessor());
+  // assertTrue(this.securityService.isIntegratedSecurity());
+  // assertTrue(this.securityService.needPostProcess());
+  // }
 
   private static class Factories {
 

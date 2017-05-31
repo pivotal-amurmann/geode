@@ -33,8 +33,6 @@ import org.apache.geode.cache.execute.ResultCollector;
 import org.apache.geode.cache.partition.PartitionRebalanceInfo;
 import org.apache.geode.distributed.DistributedMember;
 import org.apache.geode.internal.cache.InternalCache;
-import org.apache.geode.internal.security.IntegratedSecurityService;
-import org.apache.geode.internal.security.SecurityService;
 import org.apache.geode.management.DistributedRegionMXBean;
 import org.apache.geode.management.ManagementService;
 import org.apache.geode.management.cli.CliMetaData;
@@ -49,6 +47,7 @@ import org.apache.geode.management.internal.cli.functions.DataCommandFunction;
 import org.apache.geode.management.internal.cli.functions.ExportDataFunction;
 import org.apache.geode.management.internal.cli.functions.ImportDataFunction;
 import org.apache.geode.management.internal.cli.functions.RebalanceFunction;
+import org.apache.geode.management.internal.cli.functions.SelectExecStep;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
 import org.apache.geode.management.internal.cli.multistep.CLIMultiStepHelper;
 import org.apache.geode.management.internal.cli.multistep.CLIStep;
@@ -86,13 +85,21 @@ import java.util.concurrent.TimeoutException;
  */
 public class DataCommands implements GfshCommand {
 
-  final int resultItemCount = 9;
+  private final int resultItemCount = 9;
 
   private final ExportDataFunction exportDataFunction = new ExportDataFunction();
 
   private final ImportDataFunction importDataFunction = new ImportDataFunction();
 
-  private SecurityService securityService = IntegratedSecurityService.getSecurityService();
+  @Override
+  public Gfsh getGfsh() {
+    return Gfsh.getCurrentInstance();
+  }
+
+  @Override
+  public InternalCache getCache() {
+    return (InternalCache) CacheFactory.getAnyInstance();
+  }
 
   @CliCommand(value = CliStrings.REBALANCE, help = CliStrings.REBALANCE__HELP)
   @CliMetaData(relatedTopic = {CliStrings.TOPIC_GEODE_DATA, CliStrings.TOPIC_GEODE_REGION})
@@ -146,15 +153,15 @@ public class DataCommands implements GfshCommand {
       return executeRebalanceWithTimeout(includeRegions, excludeRegions, simulate);
     }
 
-    public ExecuteRebalanceWithTimeout(String[] includedRegions, String[] excludedRegions,
-        boolean toSimulate) {
+    ExecuteRebalanceWithTimeout(String[] includedRegions, String[] excludedRegions,
+                                boolean toSimulate) {
       includeRegions = includedRegions;
       excludeRegions = excludedRegions;
       simulate = toSimulate;
     }
 
-    public Result executeRebalanceWithTimeout(String[] includeRegions, String[] excludeRegions,
-        boolean simulate) {
+    Result executeRebalanceWithTimeout(String[] includeRegions, String[] excludeRegions,
+                                       boolean simulate) {
 
       Result result = null;
       try {
@@ -451,14 +458,14 @@ public class DataCommands implements GfshCommand {
     return result;
   }
 
-  public boolean checkMemberPresence(DistributedMember dsMember, InternalCache cache) {
+  private boolean checkMemberPresence(DistributedMember dsMember, InternalCache cache) {
     // check if member's presence just before executing function
     // this is to avoid running a function on departed members #47248
     Set<DistributedMember> dsMemberList = CliUtil.getAllNormalMembers(cache);
     return dsMemberList.contains(dsMember);
   }
 
-  public String listOfAllMembers(ArrayList<DistributedMember> dsMemberList) {
+  private String listOfAllMembers(ArrayList<DistributedMember> dsMemberList) {
     StringBuilder listMembersId = new StringBuilder();
     for (int j = 0; j < dsMemberList.size() - 1; j++) {
       listMembersId.append(dsMemberList.get(j).getId());
@@ -467,8 +474,9 @@ public class DataCommands implements GfshCommand {
     return listMembersId.toString();
   }
 
-  protected CompositeResultData toCompositeResultData(CompositeResultData rebalanceResulteData,
-      ArrayList<String> rstlist, int index, boolean simulate, InternalCache cache) {
+  private CompositeResultData toCompositeResultData(CompositeResultData rebalanceResulteData,
+                                                    ArrayList<String> rstlist, int index,
+                                                    boolean simulate, InternalCache cache) {
 
     // add only if there are any valid regions in results
     if (rstlist.size() > resultItemCount && StringUtils.isNotEmpty(rstlist.get(resultItemCount))) {
@@ -623,7 +631,7 @@ public class DataCommands implements GfshCommand {
     return rebalanceResultData;
   }
 
-  public DistributedMember getAssociatedMembers(String region, final InternalCache cache) {
+  private DistributedMember getAssociatedMembers(String region, final InternalCache cache) {
     DistributedRegionMXBean bean =
         ManagementService.getManagementService(cache).getDistributedRegionMXBean(region);
 
@@ -741,7 +749,7 @@ public class DataCommands implements GfshCommand {
           optionContext = ConverterHint.MEMBERIDNAME, mandatory = true,
           help = CliStrings.EXPORT_DATA__MEMBER__HELP) String memberNameOrId) {
 
-    this.securityService.authorizeRegionRead(regionName);
+    getCache().getSecurityService().authorizeRegionRead(regionName);
     final DistributedMember targetMember = CliUtil.getDistributedMemberByNameOrId(memberNameOrId);
     Result result;
 
@@ -799,7 +807,7 @@ public class DataCommands implements GfshCommand {
       @CliOption(key = CliStrings.IMPORT_DATA__INVOKE_CALLBACKS, unspecifiedDefaultValue = "false",
           help = CliStrings.IMPORT_DATA__INVOKE_CALLBACKS__HELP) boolean invokeCallbacks) {
 
-    this.securityService.authorizeRegionWrite(regionName);
+    getCache().getSecurityService().authorizeRegionWrite(regionName);
 
     Result result;
 
@@ -860,8 +868,8 @@ public class DataCommands implements GfshCommand {
       @CliOption(key = {CliStrings.PUT__PUTIFABSENT}, help = CliStrings.PUT__PUTIFABSENT__HELP,
           unspecifiedDefaultValue = "false") boolean putIfAbsent) {
 
-    this.securityService.authorizeRegionWrite(regionPath);
     InternalCache cache = getCache();
+    cache.getSecurityService().authorizeRegionWrite(regionPath);
     DataCommandResult dataResult;
     if (StringUtils.isEmpty(regionPath)) {
       return makePresentationResult(DataCommandResult.createPutResult(key, null, null,
@@ -931,9 +939,9 @@ public class DataCommands implements GfshCommand {
       @CliOption(key = CliStrings.GET__LOAD, unspecifiedDefaultValue = "true",
           specifiedDefaultValue = "true",
           help = CliStrings.GET__LOAD__HELP) Boolean loadOnCacheMiss) {
-    this.securityService.authorizeRegionRead(regionPath, key);
 
     InternalCache cache = getCache();
+    cache.getSecurityService().authorizeRegionRead(regionPath, key);
     DataCommandResult dataResult;
 
     if (StringUtils.isEmpty(regionPath)) {
@@ -959,7 +967,7 @@ public class DataCommands implements GfshCommand {
         request.setRegionName(regionPath);
         request.setValueClass(valueClass);
         request.setLoadOnCacheMiss(loadOnCacheMiss);
-        Subject subject = this.securityService.getSubject();
+        Subject subject = cache.getSecurityService().getSubject();
         if (subject != null) {
           request.setPrincipal(subject.getPrincipal());
         }
@@ -970,7 +978,8 @@ public class DataCommands implements GfshCommand {
             false);
       }
     } else {
-      dataResult = getfn.get(null, key, keyClass, valueClass, regionPath, loadOnCacheMiss);
+      dataResult = getfn.get(null, key, keyClass, valueClass, regionPath, loadOnCacheMiss,
+          cache.getSecurityService());
     }
     dataResult.setKeyClass(keyClass);
     if (valueClass != null) {
@@ -996,7 +1005,7 @@ public class DataCommands implements GfshCommand {
           help = CliStrings.LOCATE_ENTRY__RECURSIVE__HELP,
           unspecifiedDefaultValue = "false") boolean recursive) {
 
-    this.securityService.authorizeRegionRead(regionPath, key);
+    getCache().getSecurityService().authorizeRegionRead(regionPath, key);
 
     DataCommandResult dataResult;
 
@@ -1059,9 +1068,9 @@ public class DataCommands implements GfshCommand {
     }
 
     if (removeAllKeys) {
-      this.securityService.authorizeRegionWrite(regionPath);
+      cache.getSecurityService().authorizeRegionWrite(regionPath);
     } else {
-      this.securityService.authorizeRegionWrite(regionPath, key);
+      cache.getSecurityService().authorizeRegionWrite(regionPath, key);
     }
 
     @SuppressWarnings("rawtypes")
@@ -1107,7 +1116,7 @@ public class DataCommands implements GfshCommand {
     }
 
     Object[] arguments = new Object[] {query, stepName, interactive};
-    CLIStep exec = new DataCommandFunction.SelectExecStep(arguments);
+    CLIStep exec = new SelectExecStep(arguments);
     CLIStep display = new DataCommandFunction.SelectDisplayStep(arguments);
     CLIStep move = new DataCommandFunction.SelectMoveStep(arguments);
     CLIStep quit = new DataCommandFunction.SelectQuitStep(arguments);
@@ -1127,14 +1136,15 @@ public class DataCommands implements GfshCommand {
   }
 
   private static class MemberPRInfo {
-    public ArrayList<DistributedMember> dsMemberList;
+    ArrayList<DistributedMember> dsMemberList;
     public String region;
 
-    public MemberPRInfo() {
+    MemberPRInfo() {
       region = "";
       dsMemberList = new ArrayList<>();
     }
 
+    @Override
     public boolean equals(Object o2) {
       return o2 != null && this.region.equals(((MemberPRInfo) o2).region);
     }

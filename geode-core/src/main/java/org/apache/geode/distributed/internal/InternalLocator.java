@@ -694,6 +694,8 @@ public class InternalLocator extends Locator implements ConnectListener {
               LocalizedStrings.InternalDistributedSystem_STARTUP_CONFIGURATIONN_0,
               this.config.toLoggerString()));
 
+      // TODO:KIRK: need SecurityService for both DistributedSystem and startCache below
+
       this.myDs = (InternalDistributedSystem) DistributedSystem.connect(connectEnv);
 
       if (this.peerLocator) {

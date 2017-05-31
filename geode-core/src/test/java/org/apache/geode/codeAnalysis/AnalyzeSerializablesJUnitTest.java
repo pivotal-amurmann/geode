@@ -55,6 +55,9 @@ public class AnalyzeSerializablesJUnitTest {
   /** all loaded classes */
   private Map<String, CompiledClass> classes;
 
+  private File expectedDataSerializablesFile;
+  private File expectedSerializablesFile;
+
   private List<ClassAndMethodDetails> expectedDataSerializables;
   private List<ClassAndVariableDetails> expectedSerializables;
 
@@ -76,18 +79,18 @@ public class AnalyzeSerializablesJUnitTest {
 
     // setup expectedDataSerializables
 
-    File expectedDataSerializablesFile = getResourceAsFile("sanctionedDataSerializables.txt");
-    assertThat(expectedDataSerializablesFile).exists().canRead();
+    this.expectedDataSerializablesFile = getResourceAsFile("sanctionedDataSerializables.txt");
+    assertThat(this.expectedDataSerializablesFile).exists().canRead();
 
-    this.expectedDataSerializables = loadClassesAndMethods(expectedDataSerializablesFile);
+    this.expectedDataSerializables = loadClassesAndMethods(this.expectedDataSerializablesFile);
     Collections.sort(this.expectedDataSerializables);
 
     // setup expectedSerializables
 
-    File expectedSerializablesFile = getResourceAsFile("sanctionedSerializables.txt");
-    assertThat(expectedSerializablesFile).exists().canRead();
+    this.expectedSerializablesFile = getResourceAsFile("sanctionedSerializables.txt");
+    assertThat(this.expectedSerializablesFile).exists().canRead();
 
-    this.expectedSerializables = loadClassesAndVariables(expectedSerializablesFile);
+    this.expectedSerializables = loadClassesAndVariables(this.expectedSerializablesFile);
     Collections.sort(this.expectedSerializables);
 
     // setup empty actual files
@@ -119,8 +122,8 @@ public class AnalyzeSerializablesJUnitTest {
       fail(
           diff + "\n\nIf the class is not persisted or sent over the wire add it to the excludedClasses.txt file in the "
               + "\norg/apache/geode/codeAnalysis directory.  Otherwise if this doesn't "
-              + "\nbreak backward compatibility move the file actualDataSerializables.dat to the codeAnalysis "
-              + "\ntest directory and rename to sanctionedDataSerializables.txt");
+              + "\nbreak backward compatibility move the file " + this.actualDataSerializablesFile.getAbsolutePath() + " to the codeAnalysis "
+              + "\ntest directory and rename to " + this.expectedDataSerializablesFile.getAbsolutePath());
     }
   }
 
@@ -139,8 +142,8 @@ public class AnalyzeSerializablesJUnitTest {
       fail(
           diff + "\n\nIf the class is not persisted or sent over the wire add it to the excludedClasses.txt file in the "
               + "\n/org/apache/geode/codeAnalysis/ directory.  Otherwise if this doesn't "
-              + "\nbreak backward compatibility move the file actualSerializables.dat to the "
-              + "\ncodeAnalysis test directory and rename to sanctionedSerializables.txt");
+              + "\nbreak backward compatibility move the file " + this.actualSerializablesFile.getAbsolutePath() + " to the "
+              + "\ncodeAnalysis test directory and rename to " + this.expectedSerializablesFile.getAbsolutePath());
     }
   }
 
