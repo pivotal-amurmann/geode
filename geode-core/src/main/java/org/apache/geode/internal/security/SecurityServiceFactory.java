@@ -34,6 +34,10 @@ public class SecurityServiceFactory {
     // do not instantiate
   }
 
+  /**
+   * Creates and initializes SecurityService. Initialization will invoke init on both
+   * SecurityManager and PostProcessor if they are specified.
+   */
   public static SecurityService create(CacheConfig cacheConfig,
       DistributionConfig distributionConfig) {
     Properties securityConfig = getSecurityConfig(distributionConfig);
@@ -47,6 +51,10 @@ public class SecurityServiceFactory {
     return securityService;
   }
 
+  /**
+   * Creates but does NOT initialize SecurityService. Init is NOTE invoked on either
+   * SecurityManager and PostProcessor if they are specified.
+   */
   public static SecurityService create(Properties securityConfig, SecurityManager securityManager,
       PostProcessor postProcessor) {
     SecurityServiceType type = determineType(securityConfig, securityManager);

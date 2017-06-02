@@ -206,6 +206,7 @@ public class CacheFactory {
       if (this.dsProps.isEmpty()) {
         // any ds will do
         ds = InternalDistributedSystem.getConnectedInstance();
+        // TODO:KIRK: if already connected AND we specify security then throw Error
       }
       if (ds == null) {
         ds = DistributedSystem.connect(this.dsProps);
