@@ -27,11 +27,11 @@ import org.apache.geode.test.junit.categories.SecurityTest;
 /**
  * Integration tests for {@link IntegratedSecurityService} using shiro-ini.json.
  *
- * @see IntegratedSecurityServiceWithIniFileJUnitTest
+ * @see SecurityServiceWithShiroIniIntegrationTest
  */
 @Category({IntegrationTest.class, SecurityTest.class})
-public class IntegratedSecurityServiceCustomRealmJUnitTest
-    extends IntegratedSecurityServiceWithIniFileJUnitTest {
+public class SecurityServiceWithCustomRealmIntegrationTest
+    extends SecurityServiceWithShiroIniIntegrationTest {
 
   @BeforeClass
   public static void beforeClass() throws Exception {

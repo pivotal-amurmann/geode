@@ -183,13 +183,13 @@ public class LegacySecurityService implements SecurityService {
   @Override
   public Object postProcess(final String regionPath, final Object key, final Object value,
       final boolean valueIsSerialized) {
-    return null;
+    return value;
   }
 
   @Override
   public Object postProcess(final Object principal, final String regionPath, final Object key,
       final Object value, final boolean valueIsSerialized) {
-    return null;
+    return value;
   }
 
   @Override

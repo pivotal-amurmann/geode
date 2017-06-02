@@ -22,5 +22,7 @@ public enum SecurityServiceType {
   /** Legacy Security is Enabled */
   LEGACY,
   /** Shiro Config is specified */
-  CUSTOM
+  CUSTOM,
+  /** Shiro is already configured with SecurityManager */
+  EXTERNAL
 }

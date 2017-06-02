@@ -201,6 +201,7 @@ public class CacheFactory {
   public Cache create()
       throws TimeoutException, CacheWriterException, GatewayException, RegionExistsException {
     synchronized (CacheFactory.class) {
+      // TODO:KIRK: need SecurityService for both DistributedSystem and create below
       DistributedSystem ds = null;
       if (this.dsProps.isEmpty()) {
         // any ds will do

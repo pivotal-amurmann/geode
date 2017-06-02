@@ -35,7 +35,7 @@ import java.util.Properties;
  * Integration tests for {@link IntegratedSecurityService} using shiro.ini
  */
 @Category({IntegrationTest.class, SecurityTest.class})
-public class IntegratedSecurityServiceWithIniFileJUnitTest {
+public class SecurityServiceWithShiroIniIntegrationTest {
 
   protected static Properties props = new Properties();
 

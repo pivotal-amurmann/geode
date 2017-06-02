@@ -25,6 +25,8 @@ import org.apache.geode.internal.cache.CacheConfig;
 import org.apache.geode.internal.security.shiro.ConfigInitialization;
 import org.apache.geode.security.PostProcessor;
 import org.apache.geode.security.SecurityManager;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.UnavailableSecurityManagerException;
 
 public class SecurityServiceFactory {
 
@@ -41,7 +43,7 @@ public class SecurityServiceFactory {
         getPostProcessor(getPostProcessorFromConfig(cacheConfig), securityConfig);
 
     SecurityService securityService = create(securityConfig, securityManager, postProcessor);
-    // securityService.initSecurity(distributionConfig.getSecurityProps());
+    securityService.initSecurity(distributionConfig.getSecurityProps());
     return securityService;
   }
 
@@ -50,15 +52,17 @@ public class SecurityServiceFactory {
     SecurityServiceType type = determineType(securityConfig, securityManager);
     switch (type) {
       case CUSTOM:
-        String shiroConfig = securityConfig.getProperty(SECURITY_SHIRO_INIT);
-        ConfigInitialization configInitialization = new ConfigInitialization(shiroConfig);
-        configInitialization.initialize();
+        String shiroConfig = getProperty(securityConfig, SECURITY_SHIRO_INIT);
+        if (StringUtils.isNotBlank(shiroConfig)) {
+          ConfigInitialization configInitialization = new ConfigInitialization(shiroConfig);
+          configInitialization.initialize();
+        }
         return new CustomSecurityService();
       case ENABLED:
         return new EnabledSecurityService(securityManager, postProcessor);
       case LEGACY:
-        String clientAuthenticator = securityConfig.getProperty(SECURITY_CLIENT_AUTHENTICATOR);
-        String peerAuthenticator = securityConfig.getProperty(SECURITY_PEER_AUTHENTICATOR);
+        String clientAuthenticator = getProperty(securityConfig, SECURITY_CLIENT_AUTHENTICATOR);
+        String peerAuthenticator = getProperty(securityConfig, SECURITY_PEER_AUTHENTICATOR);
         return new LegacySecurityService(clientAuthenticator, peerAuthenticator);
       default:
         return new DisabledSecurityService();
@@ -67,7 +71,7 @@ public class SecurityServiceFactory {
 
   static SecurityServiceType determineType(Properties securityConfig,
       SecurityManager securityManager) {
-    boolean hasShiroConfig = securityConfig.getProperty(SECURITY_SHIRO_INIT) != null;
+    boolean hasShiroConfig = hasProperty(securityConfig, SECURITY_SHIRO_INIT);
     if (hasShiroConfig) {
       return SecurityServiceType.CUSTOM;
     }
@@ -77,11 +81,15 @@ public class SecurityServiceFactory {
       return SecurityServiceType.ENABLED;
     }
 
-    boolean hasClientAuthenticator =
-        securityConfig.getProperty(SECURITY_CLIENT_AUTHENTICATOR) != null;
-    boolean hasPeerAuthenticator = securityConfig.getProperty(SECURITY_PEER_AUTHENTICATOR) != null;
+    boolean hasClientAuthenticator = hasProperty(securityConfig, SECURITY_CLIENT_AUTHENTICATOR);
+    boolean hasPeerAuthenticator = hasProperty(securityConfig, SECURITY_PEER_AUTHENTICATOR);
     if (hasClientAuthenticator || hasPeerAuthenticator) {
       return SecurityServiceType.LEGACY;
+    }
+
+    boolean isShiroInUse = isShiroInUse();
+    if (isShiroInUse) {
+      return SecurityServiceType.CUSTOM;
     }
 
     return SecurityServiceType.DISABLED;
@@ -93,11 +101,10 @@ public class SecurityServiceFactory {
       return securityManager;
     }
 
-    String securityManagerConfig = securityConfig.getProperty(SECURITY_MANAGER);
+    String securityManagerConfig = getProperty(securityConfig, SECURITY_MANAGER);
     if (StringUtils.isNotBlank(securityManagerConfig)) {
       securityManager = SecurityService.getObjectOfTypeFromClassName(securityManagerConfig,
           SecurityManager.class);
-      securityManager.init(securityConfig);
     }
 
     return securityManager;
@@ -108,14 +115,21 @@ public class SecurityServiceFactory {
       return postProcessor;
     }
 
-    String postProcessorConfig = securityConfig.getProperty(SECURITY_POST_PROCESSOR);
+    String postProcessorConfig = getProperty(securityConfig, SECURITY_POST_PROCESSOR);
     if (StringUtils.isNotBlank(postProcessorConfig)) {
       postProcessor =
           SecurityService.getObjectOfTypeFromClassName(postProcessorConfig, PostProcessor.class);
-      postProcessor.init(securityConfig);
     }
 
     return postProcessor;
+  }
+
+  public static boolean isShiroInUse() {
+    try {
+      return SecurityUtils.getSecurityManager() != null;
+    } catch (UnavailableSecurityManagerException ignore) {
+      return false;
+    }
   }
 
   private static Properties getSecurityConfig(DistributionConfig distributionConfig) {
@@ -137,6 +151,17 @@ public class SecurityServiceFactory {
       return null;
     }
     return cacheConfig.getPostProcessor();
+  }
+
+  private static boolean hasProperty(Properties securityConfig, String key) {
+    return securityConfig != null && getProperty(securityConfig, key) != null;
+  }
+
+  private static String getProperty(Properties securityConfig, String key) {
+    if (securityConfig == null) {
+      return null;
+    }
+    return securityConfig.getProperty(key);
   }
 
 }

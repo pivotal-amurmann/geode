@@ -30,11 +30,11 @@ import java.util.concurrent.Callable;
 
 public interface SecurityService {
 
-  void initSecurity(Properties securityProps); // TODO:KIRK
+  void initSecurity(Properties securityProps);
 
-  void setSecurityManager(SecurityManager securityManager); // TODO:KIRK
+  void setSecurityManager(SecurityManager securityManager); // TODO:KIRK: delete
 
-  void setPostProcessor(PostProcessor postProcessor); // TODO:KIRK
+  void setPostProcessor(PostProcessor postProcessor); // TODO:KIRK: delete
 
   ThreadState bindSubject(Subject subject);
 

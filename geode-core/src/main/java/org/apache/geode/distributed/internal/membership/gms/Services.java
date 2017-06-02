@@ -35,6 +35,8 @@ import org.apache.geode.internal.admin.remote.RemoteTransportConfig;
 import org.apache.geode.internal.logging.InternalLogWriter;
 import org.apache.geode.internal.logging.LogService;
 import org.apache.geode.internal.logging.LoggingThreadGroup;
+import org.apache.geode.internal.security.SecurityService;
+import org.apache.geode.internal.security.SecurityServiceFactory;
 import org.apache.geode.security.AuthenticationFailedException;
 import org.apache.logging.log4j.Logger;
 
@@ -53,16 +55,19 @@ public class Services {
 
   final private Manager manager;
   final private JoinLeave joinLeave;
-  private Locator locator;
   final private HealthMonitor healthMon;
   final private Messenger messenger;
   final private Authenticator auth;
   final private ServiceConfig config;
   final private DMStats stats;
   final private Stopper cancelCriterion;
+  private final SecurityService securityService;
+
   private volatile boolean stopping;
   private volatile boolean stopped;
   private volatile Exception shutdownCause;
+
+  private Locator locator;
 
   private InternalLogWriter logWriter;
   private InternalLogWriter securityLogWriter;
@@ -108,6 +113,7 @@ public class Services {
     this.joinLeave = null;
     this.healthMon = null;
     this.messenger = null;
+    this.securityService = null;
     this.auth = null;
   }
 
@@ -120,6 +126,7 @@ public class Services {
     this.joinLeave = new GMSJoinLeave();
     this.healthMon = new GMSHealthMonitor();
     this.messenger = new JGroupsMessenger();
+    this.securityService = SecurityServiceFactory.create(null, config);
     this.auth = new GMSAuthenticator();
   }
 
@@ -256,6 +263,10 @@ public class Services {
 
   public static void setSecurityLogWriter(InternalLogWriter securityWriter) {
     staticSecurityLogWriter = securityWriter;
+  }
+
+  public SecurityService getSecurityService() {
+    return this.securityService;
   }
 
   public InternalLogWriter getLogWriter() {

@@ -1164,17 +1164,6 @@ public class GemFireCacheImpl implements InternalCache, InternalClientCache, Has
     ClusterConfigurationLoader.applyClusterPropertiesConfiguration(this, configurationResponse,
         this.system.getConfig());
 
-    // first initialize the security service using the security properties
-    this.securityService.initSecurity(this.system.getConfig().getSecurityProps());
-    // secondly if cacheConfig has a securityManager, use that instead
-    if (this.cacheConfig.getSecurityManager() != null) {
-      this.securityService.setSecurityManager(this.cacheConfig.getSecurityManager());
-    }
-    // if cacheConfig has a postProcessor, use that instead
-    if (this.cacheConfig.getPostProcessor() != null) {
-      this.securityService.setPostProcessor(this.cacheConfig.getPostProcessor());
-    }
-
     SystemMemberCacheEventProcessor.send(this, Operation.CACHE_CREATE);
     this.resourceAdvisor.initializationGate();
 

@@ -35,6 +35,7 @@ import org.apache.geode.internal.cache.InternalCache;
 import org.apache.geode.internal.cache.tier.sockets.HandShake;
 import org.apache.geode.internal.i18n.LocalizedStrings;
 import org.apache.geode.internal.logging.InternalLogWriter;
+import org.apache.geode.internal.security.IntegratedSecurityService;
 import org.apache.geode.internal.security.SecurityService;
 import org.apache.geode.internal.security.SecurityServiceFactory;
 import org.apache.geode.security.AuthenticationFailedException;
@@ -105,13 +106,12 @@ public class GMSAuthenticator implements Authenticator {
    */
   String authenticate(DistributedMember member, Properties credentials, Properties secProps)
       throws AuthenticationFailedException {
-    SecurityService securityService = getSecurityService();
+    SecurityService securityService = this.services.getSecurityService();
 
     // For older systems, locator might be started without cache, so secureService may not be
-    // initialized here. We need to check
-    // if the passed in secProps has peer authenticator or not
+    // initialized here. We need to check if the passed in secProps has peer authenticator or not at
+    // this point
     String authMethod = secProps.getProperty(SECURITY_PEER_AUTHENTICATOR);
-    // at this point,
     if (!securityService.isPeerSecurityRequired() && StringUtils.isBlank(authMethod)) {
       return null;
     }
@@ -211,35 +211,4 @@ public class GMSAuthenticator implements Authenticator {
 
   @Override
   public void emergencyClose() {}
-
-  private final AtomicReference<SecurityService> securityServiceRef = new AtomicReference<>();
-
-  /**
-   * Terrible mess. It would be nice if we could create SecurityService BEFORE this class.
-   */
-  private SecurityService getSecurityService() {
-    SecurityService securityService = this.securityServiceRef.get();
-    if (securityService == null) {
-      synchronized (this.securityServiceRef) {
-        securityService = this.securityServiceRef.get();
-        if (securityService == null) {
-          InternalCache cache = GemFireCacheImpl.getInstance();
-          if (cache != null) {
-            securityService = cache.getSecurityService();
-          }
-        }
-        if (securityService == null) {
-          InternalDistributedSystem system = InternalDistributedSystem.getConnectedInstance();
-          if (system != null) {
-            securityService = SecurityServiceFactory.create(new CacheConfig(), system.getConfig());
-          } else {
-            securityService = SecurityServiceFactory.create(null, null);
-          }
-        }
-        this.securityServiceRef.set(securityService);
-      }
-    }
-    return securityService;
-  }
-
 }
