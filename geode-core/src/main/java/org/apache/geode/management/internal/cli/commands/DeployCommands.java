@@ -14,6 +14,8 @@
  */
 package org.apache.geode.management.internal.cli.commands;
 
+import static org.apache.commons.io.FileUtils.ONE_MB;
+
 import org.apache.geode.SystemFailure;
 import org.apache.geode.cache.execute.ResultCollector;
 import org.apache.geode.distributed.DistributedMember;
@@ -322,7 +324,7 @@ public class DeployCommands implements GfshCommand {
       if (dir != null) {
         String message =
             "\nDeploying files: " + fileResult.getFormattedFileList() + "\nTotal file size is: "
-                + this.numFormatter.format((double) fileResult.computeFileSizeTotal() / 1048576)
+                + this.numFormatter.format((double) fileResult.computeFileSizeTotal() / ONE_MB)
                 + "MB\n\nContinue? ";
 
         if (readYesNo(message, Response.YES) == Response.NO) {

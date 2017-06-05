@@ -122,8 +122,10 @@ public class AnalyzeSerializablesJUnitTest {
       fail(
           diff + "\n\nIf the class is not persisted or sent over the wire add it to the excludedClasses.txt file in the "
               + "\norg/apache/geode/codeAnalysis directory.  Otherwise if this doesn't "
-              + "\nbreak backward compatibility move the file " + this.actualDataSerializablesFile.getAbsolutePath() + " to the codeAnalysis "
-              + "\ntest directory and rename to " + this.expectedDataSerializablesFile.getAbsolutePath());
+              + "\nbreak backward compatibility move the file "
+              + this.actualDataSerializablesFile.getAbsolutePath() + " to the codeAnalysis "
+              + "\ntest directory and rename to "
+              + this.expectedDataSerializablesFile.getAbsolutePath());
     }
   }
 
@@ -142,8 +144,10 @@ public class AnalyzeSerializablesJUnitTest {
       fail(
           diff + "\n\nIf the class is not persisted or sent over the wire add it to the excludedClasses.txt file in the "
               + "\n/org/apache/geode/codeAnalysis/ directory.  Otherwise if this doesn't "
-              + "\nbreak backward compatibility move the file " + this.actualSerializablesFile.getAbsolutePath() + " to the "
-              + "\ncodeAnalysis test directory and rename to " + this.expectedSerializablesFile.getAbsolutePath());
+              + "\nbreak backward compatibility move the file "
+              + this.actualSerializablesFile.getAbsolutePath() + " to the "
+              + "\ncodeAnalysis test directory and rename to "
+              + this.expectedSerializablesFile.getAbsolutePath());
     }
   }
 

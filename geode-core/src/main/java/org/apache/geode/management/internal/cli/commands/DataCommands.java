@@ -154,14 +154,14 @@ public class DataCommands implements GfshCommand {
     }
 
     ExecuteRebalanceWithTimeout(String[] includedRegions, String[] excludedRegions,
-                                boolean toSimulate) {
+        boolean toSimulate) {
       includeRegions = includedRegions;
       excludeRegions = excludedRegions;
       simulate = toSimulate;
     }
 
     Result executeRebalanceWithTimeout(String[] includeRegions, String[] excludeRegions,
-                                       boolean simulate) {
+        boolean simulate) {
 
       Result result = null;
       try {
@@ -475,8 +475,7 @@ public class DataCommands implements GfshCommand {
   }
 
   private CompositeResultData toCompositeResultData(CompositeResultData rebalanceResulteData,
-                                                    ArrayList<String> rstlist, int index,
-                                                    boolean simulate, InternalCache cache) {
+      ArrayList<String> rstlist, int index, boolean simulate, InternalCache cache) {
 
     // add only if there are any valid regions in results
     if (rstlist.size() > resultItemCount && StringUtils.isNotEmpty(rstlist.get(resultItemCount))) {
