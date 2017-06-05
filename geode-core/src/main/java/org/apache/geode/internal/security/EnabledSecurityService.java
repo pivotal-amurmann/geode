@@ -78,7 +78,9 @@ public class EnabledSecurityService implements SecurityService {
   @Override
   public void initSecurity(final Properties securityProps) {
     this.securityManager.init(securityProps);
-    this.postProcessor.init(securityProps);
+    if (this.postProcessor != null) {
+      this.postProcessor.init(securityProps);
+    }
   }
 
   @Override

@@ -88,7 +88,7 @@ public class Server {
 
       SecurityService securityService =
           SecurityServiceFactory.create(securityProperties, new TestSecurityManager(), null);
-      securityService.initSecurity(securityProperties); // TODO:KIRK: clean this up
+      securityService.initSecurity(securityProperties);
 
       // wire in the authenticator and authorizaton
       JMXShiroAuthenticator interceptor = new JMXShiroAuthenticator(securityService);

@@ -32,9 +32,8 @@ import org.junit.experimental.categories.Category;
 public class SecurityServiceFactoryTest {
 
   @Test
-  public void getPostProcessor_null_throwsNPE() throws Exception {
-    assertThatThrownBy(() -> SecurityServiceFactory.getPostProcessor(null, null))
-        .isExactlyInstanceOf(NullPointerException.class);
+  public void getPostProcessor_null_returnsNull() throws Exception {
+    assertThat(SecurityServiceFactory.getPostProcessor(null, null)).isNull();
   }
 
   @Test
@@ -46,7 +45,7 @@ public class SecurityServiceFactoryTest {
   }
 
   @Test
-  public void getPostProcessor_SecurityConfig_initsPostProcessor() throws Exception {
+  public void getPostProcessor_SecurityConfig_createsPostProcessor() throws Exception {
     Properties securityConfig = new Properties();
     securityConfig.setProperty(SECURITY_POST_PROCESSOR, FakePostProcessor.class.getName());
 
@@ -56,8 +55,8 @@ public class SecurityServiceFactoryTest {
 
     FakePostProcessor fakePostProcessor = (FakePostProcessor) postProcessor;
 
-    assertThat(fakePostProcessor.getInitInvocations()).isEqualTo(1);
-    assertThat(fakePostProcessor.getSecurityProps()).isSameAs(securityConfig);
+    assertThat(fakePostProcessor.getInitInvocations()).isEqualTo(0);
+    assertThat(fakePostProcessor.getSecurityProps()).isNull();
   }
 
   @Test
@@ -71,9 +70,8 @@ public class SecurityServiceFactoryTest {
   }
 
   @Test
-  public void getSecurityManager_null_throwsNPE() throws Exception {
-    assertThatThrownBy(() -> SecurityServiceFactory.getSecurityManager(null, null))
-        .isExactlyInstanceOf(NullPointerException.class);
+  public void getSecurityManager_null_returnsNull() throws Exception {
+    assertThat(SecurityServiceFactory.getSecurityManager(null, null)).isNull();
   }
 
   @Test
@@ -85,7 +83,7 @@ public class SecurityServiceFactoryTest {
   }
 
   @Test
-  public void getSecurityManager_SecurityConfig_initsSecurityManager() throws Exception {
+  public void getSecurityManager_SecurityConfig_createsSecurityManager() throws Exception {
     Properties securityConfig = new Properties();
     securityConfig.setProperty(SECURITY_MANAGER, FakeSecurityManager.class.getName());
 
@@ -96,8 +94,8 @@ public class SecurityServiceFactoryTest {
 
     FakeSecurityManager fakeSecurityManager = (FakeSecurityManager) securityManager;
 
-    assertThat(fakeSecurityManager.getInitInvocations()).isEqualTo(1);
-    assertThat(fakeSecurityManager.getSecurityProps()).isSameAs(securityConfig);
+    assertThat(fakeSecurityManager.getInitInvocations()).isEqualTo(0);
+    assertThat(fakeSecurityManager.getSecurityProps()).isNull();
   }
 
   @Test
@@ -111,9 +109,9 @@ public class SecurityServiceFactoryTest {
   }
 
   @Test
-  public void determineType_null_throwsNPE() throws Exception {
-    assertThatThrownBy(() -> SecurityServiceFactory.determineType(null, null))
-        .isExactlyInstanceOf(NullPointerException.class);
+  public void determineType_null_returnsDISABLED() throws Exception {
+    assertThat(SecurityServiceFactory.determineType(null, null))
+        .isSameAs(SecurityServiceType.DISABLED);
   }
 
   @Test

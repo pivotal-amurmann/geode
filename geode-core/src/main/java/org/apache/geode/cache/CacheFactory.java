@@ -14,8 +14,6 @@
  */
 package org.apache.geode.cache;
 
-import java.util.Properties;
-
 import org.apache.geode.distributed.ConfigurationProperties;
 import org.apache.geode.distributed.DistributedSystem;
 import org.apache.geode.distributed.internal.InternalDistributedSystem;
@@ -31,6 +29,8 @@ import org.apache.geode.security.AuthenticationFailedException;
 import org.apache.geode.security.AuthenticationRequiredException;
 import org.apache.geode.security.PostProcessor;
 import org.apache.geode.security.SecurityManager;
+
+import java.util.Properties;
 
 /**
  * Factory class used to create the singleton {@link Cache cache} and connect to the GemFire
@@ -170,7 +170,7 @@ public class CacheFactory {
       CacheConfig cacheConfig) throws CacheExistsException, TimeoutException, CacheWriterException,
       GatewayException, RegionExistsException {
     // Moved code in this method to GemFireCacheImpl.create
-    return GemFireCacheImpl.create(system, existingOk, cacheConfig);
+    return GemFireCacheImpl.create((InternalDistributedSystem) system, existingOk, cacheConfig);
   }
 
   /**
@@ -201,17 +201,17 @@ public class CacheFactory {
   public Cache create()
       throws TimeoutException, CacheWriterException, GatewayException, RegionExistsException {
     synchronized (CacheFactory.class) {
-      // TODO:KIRK: need SecurityService for both DistributedSystem and create below
       DistributedSystem ds = null;
       if (this.dsProps.isEmpty()) {
         // any ds will do
         ds = InternalDistributedSystem.getConnectedInstance();
-        // TODO:KIRK: if already connected AND we specify security then throw Error
+        // TODO:if already connected AND used setSecurityManager or setPostProcessor then throw
+        // Error
       }
       if (ds == null) {
         ds = DistributedSystem.connect(this.dsProps);
       }
-      return create(ds, true, cacheConfig);
+      return create(ds, true, this.cacheConfig);
     }
   }
 

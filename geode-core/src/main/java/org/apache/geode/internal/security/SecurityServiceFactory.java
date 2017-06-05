@@ -34,10 +34,6 @@ public class SecurityServiceFactory {
     // do not instantiate
   }
 
-  /**
-   * Creates and initializes SecurityService. Initialization will invoke init on both
-   * SecurityManager and PostProcessor if they are specified.
-   */
   public static SecurityService create(CacheConfig cacheConfig,
       DistributionConfig distributionConfig) {
     Properties securityConfig = getSecurityConfig(distributionConfig);
@@ -45,16 +41,26 @@ public class SecurityServiceFactory {
         getSecurityManager(getSecurityManagerFromConfig(cacheConfig), securityConfig);
     PostProcessor postProcessor =
         getPostProcessor(getPostProcessorFromConfig(cacheConfig), securityConfig);
-
-    SecurityService securityService = create(securityConfig, securityManager, postProcessor);
-    securityService.initSecurity(distributionConfig.getSecurityProps());
-    return securityService;
+    return create(distributionConfig, securityManager, postProcessor);
   }
 
   /**
-   * Creates but does NOT initialize SecurityService. Init is NOTE invoked on either
+   * Creates and initializes SecurityService. Initialization will invoke init on both
    * SecurityManager and PostProcessor if they are specified.
    */
+  public static SecurityService create(DistributionConfig distributionConfig,
+      SecurityManager securityManager, PostProcessor postProcessor) {
+    Properties securityConfig = getSecurityConfig(distributionConfig);
+
+    SecurityService securityService = create(securityConfig, securityManager, postProcessor);
+    initialize(securityService, distributionConfig);
+    return securityService;
+  }
+
+  public static SecurityService create() {
+    return new DisabledSecurityService();
+  }
+
   public static SecurityService create(Properties securityConfig, SecurityManager securityManager,
       PostProcessor postProcessor) {
     SecurityServiceType type = determineType(securityConfig, securityManager);
@@ -170,6 +176,13 @@ public class SecurityServiceFactory {
       return null;
     }
     return securityConfig.getProperty(key);
+  }
+
+  private static void initialize(SecurityService securityService,
+      DistributionConfig distributionConfig) {
+    if (securityService != null && distributionConfig != null) {
+      securityService.initSecurity(distributionConfig.getSecurityProps());
+    }
   }
 
 }
