@@ -913,6 +913,106 @@ public class DataCommandFunction extends FunctionAdapter implements InternalEnti
     }
   }
 
+  public static class SelectExecStep extends CLIMultiStepHelper.RemoteStep {
+    private static final Logger logger = LogService.getLogger();
+
+    private static final long serialVersionUID = 1L;
+
+    public SelectExecStep(Object[] arguments) {
+      super(DataCommandFunction.SELECT_STEP_EXEC, arguments);
+    }
+
+    @Override
+    public Result exec() {
+      String remainingQuery = (String) commandArguments[0];
+      boolean interactive = (Boolean) commandArguments[2];
+      DataCommandResult result = _select(remainingQuery);
+      int endCount = 0;
+      DataCommandFunction.cachedResult = result;
+      if (interactive) {
+        endCount = DataCommandFunction.getPageSize();
+      } else {
+        if (result.getSelectResult() != null) {
+          endCount = result.getSelectResult().size();
+        }
+      }
+      if (interactive) {
+        return result.pageResult(0, endCount, DataCommandFunction.SELECT_STEP_DISPLAY);
+      } else {
+        return CLIMultiStepHelper.createBannerResult(new String[] {}, new Object[] {},
+            DataCommandFunction.SELECT_STEP_END);
+      }
+    }
+
+    public DataCommandResult _select(String query) {
+      InternalCache cache = (InternalCache) CacheFactory.getAnyInstance();
+      DataCommandResult dataResult;
+
+      if (StringUtils.isEmpty(query)) {
+        dataResult = DataCommandResult.createSelectInfoResult(null, null, -1, null,
+            CliStrings.QUERY__MSG__QUERY_EMPTY, false);
+        return dataResult;
+      }
+
+      Object array[] = DataCommands.replaceGfshEnvVar(query, CommandExecutionContext.getShellEnv());
+      query = (String) array[1];
+      query = addLimit(query);
+
+      @SuppressWarnings("deprecation")
+      QCompiler compiler = new QCompiler();
+      Set<String> regionsInQuery;
+      try {
+        CompiledValue compiledQuery = compiler.compileQuery(query);
+        Set<String> regions = new HashSet<>();
+        compiledQuery.getRegionsInQuery(regions, null);
+
+        // authorize data read on these regions
+        for (String region : regions) {
+          cache.getSecurityService().authorizeRegionRead(region);
+        }
+
+        regionsInQuery = Collections.unmodifiableSet(regions);
+        if (regionsInQuery.size() > 0) {
+          Set<DistributedMember> members =
+              DataCommands.getQueryRegionsAssociatedMembers(regionsInQuery, cache, false);
+          if (members != null && members.size() > 0) {
+            DataCommandFunction function = new DataCommandFunction();
+            DataCommandRequest request = new DataCommandRequest();
+            request.setCommand(CliStrings.QUERY);
+            request.setQuery(query);
+            Subject subject = cache.getSecurityService().getSubject();
+            if (subject != null) {
+              request.setPrincipal(subject.getPrincipal());
+            }
+            dataResult = DataCommands.callFunctionForRegion(request, function, members);
+            dataResult.setInputQuery(query);
+            return dataResult;
+          } else {
+            return DataCommandResult.createSelectInfoResult(null, null, -1, null, CliStrings.format(
+                CliStrings.QUERY__MSG__REGIONS_NOT_FOUND, regionsInQuery.toString()), false);
+          }
+        } else {
+          return DataCommandResult.createSelectInfoResult(null, null, -1, null,
+              CliStrings.format(CliStrings.QUERY__MSG__INVALID_QUERY,
+                  "Region mentioned in query probably missing /"),
+              false);
+        }
+      } catch (QueryInvalidException qe) {
+        logger.error("{} Failed Error {}", query, qe.getMessage(), qe);
+        return DataCommandResult.createSelectInfoResult(null, null, -1, null,
+            CliStrings.format(CliStrings.QUERY__MSG__INVALID_QUERY, qe.getMessage()), false);
+      }
+    }
+
+    private String addLimit(String query) {
+      if (StringUtils.containsIgnoreCase(query, " limit")
+          || StringUtils.containsIgnoreCase(query, " count(")) {
+        return query;
+      }
+      return query + " limit " + DataCommandFunction.getFetchSize();
+    }
+  }
+
   public static class SelectQuitStep extends CLIMultiStepHelper.RemoteStep {
 
     public SelectQuitStep(Object[] arguments) {
