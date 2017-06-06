@@ -16,14 +16,13 @@ package org.apache.geode.security;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.CacheFactory;
 import org.apache.geode.distributed.ConfigurationProperties;
 import org.apache.geode.internal.cache.InternalCache;
 import org.apache.geode.internal.security.SecurityService;
-import org.apache.geode.internal.security.SecurityServiceFactory;
 import org.apache.geode.security.templates.DummyAuthenticator;
 import org.apache.geode.test.junit.categories.IntegrationTest;
 import org.apache.geode.test.junit.categories.SecurityTest;
@@ -53,6 +52,8 @@ public class CacheFactoryWithSecurityObjectTest {
         .setSecurityManager(this.simpleSecurityManager).setPostProcessor(null).create();
     SecurityService securityService = this.cache.getSecurityService();
     assertTrue(securityService.isIntegratedSecurity());
+    assertTrue(securityService.isClientSecurityRequired());
+    assertTrue(securityService.isPeerSecurityRequired());
     assertFalse(securityService.needPostProcess());
     assertNotNull(securityService.getSecurityManager());
   }
@@ -63,10 +64,29 @@ public class CacheFactoryWithSecurityObjectTest {
         .setPostProcessor(new TestPostProcessor()).setSecurityManager(null).create();
     SecurityService securityService = this.cache.getSecurityService();
     assertFalse(securityService.isIntegratedSecurity());
+    assertFalse(securityService.isClientSecurityRequired());
+    assertFalse(securityService.isPeerSecurityRequired());
     assertFalse(securityService.needPostProcess());
+    assertNull(securityService.getPostProcessor());
+  }
+
+  @Test
+  public void testCreateCacheWithSecurityManagerAndPostProcessor() throws Exception {
+    this.cache = (InternalCache) new CacheFactory(this.properties)
+        .setSecurityManager(this.simpleSecurityManager).setPostProcessor(new TestPostProcessor()).create();
+    SecurityService securityService = this.cache.getSecurityService();
+    assertTrue(securityService.isIntegratedSecurity());
+    assertTrue(securityService.isClientSecurityRequired());
+    assertTrue(securityService.isPeerSecurityRequired());
+    assertTrue(securityService.needPostProcess());
+    assertNotNull(securityService.getSecurityManager());
     assertNotNull(securityService.getPostProcessor());
   }
 
+  /**
+   * This test seems to be misleading. Nothing is overridden here. SecurityManager
+   * is preferred over SECURITY_CLIENT_AUTHENTICATOR.
+   */
   @Test
   public void testOverride() throws Exception {
     this.properties.setProperty(ConfigurationProperties.SECURITY_CLIENT_AUTHENTICATOR,
@@ -80,8 +100,10 @@ public class CacheFactoryWithSecurityObjectTest {
 
     assertTrue(securityService.isIntegratedSecurity());
     assertTrue(securityService.isClientSecurityRequired());
+    assertTrue(securityService.isPeerSecurityRequired());
     assertTrue(securityService.needPostProcess());
     assertNotNull(securityService.getSecurityManager());
+    assertNotNull(securityService.getPostProcessor());
   }
 
   @After

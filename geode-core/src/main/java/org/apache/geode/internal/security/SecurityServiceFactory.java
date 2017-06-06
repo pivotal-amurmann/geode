@@ -55,6 +55,11 @@ public class SecurityServiceFactory {
       SecurityManager securityManager, PostProcessor postProcessor) {
     Properties securityConfig = getSecurityConfig(distributionConfig);
 
+    securityManager =
+        getSecurityManager(securityManager, securityConfig);
+    postProcessor =
+        getPostProcessor(postProcessor, securityConfig);
+
     SecurityService securityService = create(securityConfig, securityManager, postProcessor);
     initialize(securityService, distributionConfig);
     return securityService;
@@ -74,11 +79,9 @@ public class SecurityServiceFactory {
           ConfigInitialization configInitialization = new ConfigInitialization(shiroConfig);
           configInitialization.initialize();
         }
-        return new CustomSecurityService();
+        return new CustomSecurityService(postProcessor);
       case ENABLED:
         return new EnabledSecurityService(securityManager, postProcessor);
-      case POST_PROCESSOR:
-        return new PostProcessorService(postProcessor);
       case LEGACY:
         String clientAuthenticator = getProperty(securityConfig, SECURITY_CLIENT_AUTHENTICATOR);
         String peerAuthenticator = getProperty(securityConfig, SECURITY_PEER_AUTHENTICATOR);
@@ -95,7 +98,7 @@ public class SecurityServiceFactory {
       return SecurityServiceType.CUSTOM;
     }
 
-    boolean hasSecurityManager = securityManager != null;
+    boolean hasSecurityManager = securityManager != null || hasProperty(securityConfig, SECURITY_MANAGER);
     if (hasSecurityManager) {
       return SecurityServiceType.ENABLED;
     }
@@ -109,11 +112,6 @@ public class SecurityServiceFactory {
     boolean isShiroInUse = isShiroInUse();
     if (isShiroInUse) {
       return SecurityServiceType.CUSTOM;
-    }
-
-    boolean hasPostProcessor = postProcessor != null;
-    if (hasPostProcessor) {
-      return SecurityServiceType.POST_PROCESSOR;
     }
 
     return SecurityServiceType.DISABLED;
@@ -148,7 +146,7 @@ public class SecurityServiceFactory {
     return postProcessor;
   }
 
-  public static boolean isShiroInUse() {
+  private static boolean isShiroInUse() {
     try {
       return SecurityUtils.getSecurityManager() != null;
     } catch (UnavailableSecurityManagerException ignore) {

@@ -14,15 +14,21 @@
  */
 package org.apache.geode.internal.security;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.security.AccessController;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import org.apache.commons.lang.SerializationException;
 import org.apache.commons.lang.StringUtils;
+import org.apache.geode.GemFireIOException;
+import org.apache.geode.internal.cache.EntryEventImpl;
 import org.apache.geode.internal.logging.LogService;
 import org.apache.geode.internal.security.shiro.GeodeAuthenticationToken;
 import org.apache.geode.internal.security.shiro.ShiroPrincipal;
+import org.apache.geode.internal.util.BlobHelper;
 import org.apache.geode.security.AuthenticationFailedException;
 import org.apache.geode.security.GemFireSecurityException;
 import org.apache.geode.security.NotAuthorizedException;
@@ -44,13 +50,17 @@ import org.apache.geode.security.SecurityManager;
 public class CustomSecurityService implements SecurityService {
   private static Logger logger = LogService.getLogger(LogService.SECURITY_LOGGER_NAME);
 
-  CustomSecurityService() {
-    // nothing
+  private final PostProcessor postProcessor;
+
+  CustomSecurityService(PostProcessor postProcessor) {
+    this.postProcessor = postProcessor;
   }
 
   @Override
   public void initSecurity(final Properties securityProps) {
-    // nothing
+    if (this.postProcessor != null) {
+      this.postProcessor.init(securityProps);
+    }
   }
 
   @Override
@@ -270,19 +280,48 @@ public class CustomSecurityService implements SecurityService {
 
   @Override
   public boolean needPostProcess() {
-    return false;
+    return this.postProcessor != null;
   }
 
   @Override
   public Object postProcess(final String regionPath, final Object key, final Object value,
-      final boolean valueIsSerialized) {
-    return value;
+                            final boolean valueIsSerialized) {
+    return postProcess(null, regionPath, key, value, valueIsSerialized);
   }
 
   @Override
-  public Object postProcess(final Object principal, final String regionPath, final Object key,
-      final Object value, final boolean valueIsSerialized) {
-    return value;
+  public Object postProcess(Object principal, final String regionPath, final Object key,
+                            final Object value, final boolean valueIsSerialized) {
+    if (!needPostProcess()) {
+      return value;
+    }
+
+    if (principal == null) {
+      Subject subject = getSubject();
+      if (subject == null) {
+        return value;
+      }
+      principal = (Serializable) subject.getPrincipal();
+    }
+
+    String regionName = StringUtils.stripStart(regionPath, "/");
+    Object newValue;
+
+    // if the data is a byte array, but the data itself is supposed to be an object, we need to
+    // deserialize it before we pass it to the callback.
+    if (valueIsSerialized && value instanceof byte[]) {
+      try {
+        Object oldObj = EntryEventImpl.deserialize((byte[]) value);
+        Object newObj = this.postProcessor.processRegionValue(principal, regionName, key, oldObj);
+        newValue = BlobHelper.serializeToBlob(newObj);
+      } catch (IOException | SerializationException e) {
+        throw new GemFireIOException("Exception de/serializing entry value", e);
+      }
+    } else {
+      newValue = this.postProcessor.processRegionValue(principal, regionName, key, value);
+    }
+
+    return newValue;
   }
 
   @Override
@@ -307,6 +346,6 @@ public class CustomSecurityService implements SecurityService {
 
   @Override
   public PostProcessor getPostProcessor() {
-    return null;
+    return this.postProcessor;
   }
 }

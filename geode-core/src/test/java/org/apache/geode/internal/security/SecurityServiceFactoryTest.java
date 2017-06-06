@@ -144,12 +144,12 @@ public class SecurityServiceFactoryTest {
   }
 
   @Test
-  public void determineType_postProcessor_returnsPOST_PROCESSOR() throws Exception {
+  public void determineType_postProcessor_returnsDISABLED() throws Exception {
     Properties securityConfig = new Properties();
     PostProcessor mockPostProcessor = mock(PostProcessor.class);
 
     assertThat(SecurityServiceFactory.determineType(securityConfig, null, mockPostProcessor))
-        .isSameAs(SecurityServiceType.POST_PROCESSOR);
+        .isSameAs(SecurityServiceType.DISABLED);
   }
 
   @Test
@@ -247,20 +247,30 @@ public class SecurityServiceFactoryTest {
   }
 
   @Test
-  public void create_postProcessor_createsPostProcessorService() throws Exception {
+  public void create_postProcessor_createsDisabledSecurityService() throws Exception {
     Properties securityConfig = new Properties();
     PostProcessor mockPostProcessor = mock(PostProcessor.class);
 
     assertThat(SecurityServiceFactory.create(securityConfig, null, mockPostProcessor))
-        .isInstanceOf(PostProcessorService.class);
+        .isInstanceOf(DisabledSecurityService.class);
   }
 
   @Test
-  public void create_securityManager_createsPostProcessorService() throws Exception {
+  public void create_securityManager_createsEnabledSecurityService() throws Exception {
     Properties securityConfig = new Properties();
     SecurityManager mockSecurityManager = mock(SecurityManager.class);
 
     assertThat(SecurityServiceFactory.create(securityConfig, mockSecurityManager, null))
+        .isInstanceOf(EnabledSecurityService.class);
+  }
+
+  @Test
+  public void create_securityManagerAndPostProcessor_createsEnabledSecurityService() throws Exception {
+    Properties securityConfig = new Properties();
+    SecurityManager mockSecurityManager = mock(SecurityManager.class);
+    PostProcessor mockPostProcessor = mock(PostProcessor.class);
+
+    assertThat(SecurityServiceFactory.create(securityConfig, mockSecurityManager, mockPostProcessor))
         .isInstanceOf(EnabledSecurityService.class);
   }
 
