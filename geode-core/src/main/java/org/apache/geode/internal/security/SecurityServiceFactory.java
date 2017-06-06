@@ -23,6 +23,8 @@ import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_SHIR
 import org.apache.commons.lang.StringUtils;
 import org.apache.geode.distributed.internal.DistributionConfig;
 import org.apache.geode.internal.cache.CacheConfig;
+import org.apache.geode.internal.cache.GemFireCacheImpl;
+import org.apache.geode.internal.cache.InternalCache;
 import org.apache.geode.internal.security.shiro.ConfigInitialization;
 import org.apache.geode.security.PostProcessor;
 import org.apache.geode.security.SecurityManager;
@@ -87,6 +89,14 @@ public class SecurityServiceFactory {
       default:
         return new DisabledSecurityService();
     }
+  }
+
+  public static SecurityService findSecurityService() {
+    InternalCache cache = GemFireCacheImpl.getInstance();
+    if (cache != null) {
+      return cache.getSecurityService();
+    }
+    return SecurityServiceFactory.create();
   }
 
   static SecurityServiceType determineType(Properties securityConfig,

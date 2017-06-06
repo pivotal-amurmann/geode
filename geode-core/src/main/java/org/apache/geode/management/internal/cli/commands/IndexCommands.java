@@ -80,12 +80,6 @@ public class IndexCommands implements GfshCommand {
   private static final Set<IndexInfo> indexDefinitions =
       Collections.synchronizedSet(new HashSet<IndexInfo>());
 
-  @Override
-  public Set<DistributedMember> getMembers(final InternalCache cache) {
-    // TODO determine what this does (as it is untested and unmockable!)
-    return CliUtil.getAllMembers(cache);
-  }
-
   @CliCommand(value = CliStrings.LIST_INDEX, help = CliStrings.LIST_INDEX__HELP)
   @CliMetaData(shellOnly = false,
       relatedTopic = {CliStrings.TOPIC_GEODE_REGION, CliStrings.TOPIC_GEODE_DATA})

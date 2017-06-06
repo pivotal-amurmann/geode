@@ -14,6 +14,8 @@
  */
 package org.apache.geode.management.internal.web.controllers.support;
 
+import static org.apache.geode.internal.security.SecurityServiceFactory.findSecurityService;
+
 import org.apache.geode.distributed.internal.DistributionConfig;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.internal.cache.InternalCache;
@@ -74,14 +76,6 @@ public class LoginHandlerInterceptor extends HandlerInterceptorAdapter {
 
   public static Map<String, String> getEnvironment() {
     return ENV.get();
-  }
-
-  private static SecurityService findSecurityService() {
-    InternalCache cache = GemFireCacheImpl.getInstance();
-    if (cache != null) {
-      return cache.getSecurityService();
-    }
-    return SecurityServiceFactory.create();
   }
 
   @Override
