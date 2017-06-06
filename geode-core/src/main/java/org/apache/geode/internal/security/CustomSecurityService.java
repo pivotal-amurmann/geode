@@ -245,7 +245,7 @@ public class CustomSecurityService implements SecurityService {
 
   @Override
   public void authorize(final String resource, final String operation, String regionName,
-                        final String key) {
+      final String key) {
     regionName = StringUtils.stripStart(regionName, "/");
     authorize(new ResourcePermission(resource, operation, regionName, key));
   }
@@ -285,13 +285,13 @@ public class CustomSecurityService implements SecurityService {
 
   @Override
   public Object postProcess(final String regionPath, final Object key, final Object value,
-                            final boolean valueIsSerialized) {
+      final boolean valueIsSerialized) {
     return postProcess(null, regionPath, key, value, valueIsSerialized);
   }
 
   @Override
   public Object postProcess(Object principal, final String regionPath, final Object key,
-                            final Object value, final boolean valueIsSerialized) {
+      final Object value, final boolean valueIsSerialized) {
     if (!needPostProcess()) {
       return value;
     }

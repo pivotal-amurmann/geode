@@ -55,10 +55,8 @@ public class SecurityServiceFactory {
       SecurityManager securityManager, PostProcessor postProcessor) {
     Properties securityConfig = getSecurityConfig(distributionConfig);
 
-    securityManager =
-        getSecurityManager(securityManager, securityConfig);
-    postProcessor =
-        getPostProcessor(postProcessor, securityConfig);
+    securityManager = getSecurityManager(securityManager, securityConfig);
+    postProcessor = getPostProcessor(postProcessor, securityConfig);
 
     SecurityService securityService = create(securityConfig, securityManager, postProcessor);
     initialize(securityService, distributionConfig);
@@ -98,7 +96,8 @@ public class SecurityServiceFactory {
       return SecurityServiceType.CUSTOM;
     }
 
-    boolean hasSecurityManager = securityManager != null || hasProperty(securityConfig, SECURITY_MANAGER);
+    boolean hasSecurityManager =
+        securityManager != null || hasProperty(securityConfig, SECURITY_MANAGER);
     if (hasSecurityManager) {
       return SecurityServiceType.ENABLED;
     }

@@ -73,7 +73,8 @@ public class CacheFactoryWithSecurityObjectTest {
   @Test
   public void testCreateCacheWithSecurityManagerAndPostProcessor() throws Exception {
     this.cache = (InternalCache) new CacheFactory(this.properties)
-        .setSecurityManager(this.simpleSecurityManager).setPostProcessor(new TestPostProcessor()).create();
+        .setSecurityManager(this.simpleSecurityManager).setPostProcessor(new TestPostProcessor())
+        .create();
     SecurityService securityService = this.cache.getSecurityService();
     assertTrue(securityService.isIntegratedSecurity());
     assertTrue(securityService.isClientSecurityRequired());
@@ -84,8 +85,8 @@ public class CacheFactoryWithSecurityObjectTest {
   }
 
   /**
-   * This test seems to be misleading. Nothing is overridden here. SecurityManager
-   * is preferred over SECURITY_CLIENT_AUTHENTICATOR.
+   * This test seems to be misleading. Nothing is overridden here. SecurityManager is preferred over
+   * SECURITY_CLIENT_AUTHENTICATOR.
    */
   @Test
   public void testOverride() throws Exception {

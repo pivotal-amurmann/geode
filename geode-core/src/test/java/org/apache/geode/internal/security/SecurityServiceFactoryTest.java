@@ -265,13 +265,15 @@ public class SecurityServiceFactoryTest {
   }
 
   @Test
-  public void create_securityManagerAndPostProcessor_createsEnabledSecurityService() throws Exception {
+  public void create_securityManagerAndPostProcessor_createsEnabledSecurityService()
+      throws Exception {
     Properties securityConfig = new Properties();
     SecurityManager mockSecurityManager = mock(SecurityManager.class);
     PostProcessor mockPostProcessor = mock(PostProcessor.class);
 
-    assertThat(SecurityServiceFactory.create(securityConfig, mockSecurityManager, mockPostProcessor))
-        .isInstanceOf(EnabledSecurityService.class);
+    assertThat(
+        SecurityServiceFactory.create(securityConfig, mockSecurityManager, mockPostProcessor))
+            .isInstanceOf(EnabledSecurityService.class);
   }
 
 }
