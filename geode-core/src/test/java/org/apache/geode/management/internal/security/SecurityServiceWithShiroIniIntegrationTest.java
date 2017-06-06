@@ -48,8 +48,7 @@ public class SecurityServiceWithShiroIniIntegrationTest {
 
   @Before
   public void before() {
-    this.securityService = SecurityServiceFactory.create(null, null);
-    this.securityService.initSecurity(props);
+    this.securityService = SecurityServiceFactory.create(props, null, null);
   }
 
   @Test

@@ -303,7 +303,17 @@ public class InternalDistributedSystem extends DistributedSystem
    * Creates a new instance of <code>InternalDistributedSystem</code> with the given configuration.
    */
   public static InternalDistributedSystem newInstance(Properties config) {
-    return newInstance(config, null, null);
+    return newInstance(config, SecurityConfig.get());
+  }
+
+  public static InternalDistributedSystem newInstance(Properties config,
+      SecurityConfig securityConfig) {
+    if (securityConfig == null) {
+      return newInstance(config, null, null);
+    } else {
+      return newInstance(config, securityConfig.getSecurityManager(),
+          securityConfig.getPostProcessor());
+    }
   }
 
   public static InternalDistributedSystem newInstance(Properties config,

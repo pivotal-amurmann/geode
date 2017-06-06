@@ -14,10 +14,26 @@
  */
 package org.apache.geode.internal.security;
 
+import java.security.AccessController;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.geode.internal.logging.LogService;
+import org.apache.geode.internal.security.shiro.GeodeAuthenticationToken;
+import org.apache.geode.internal.security.shiro.ShiroPrincipal;
+import org.apache.geode.security.AuthenticationFailedException;
+import org.apache.geode.security.GemFireSecurityException;
+import org.apache.geode.security.NotAuthorizedException;
+import org.apache.geode.security.ResourcePermission.Operation;
+import org.apache.geode.security.ResourcePermission.Resource;
+import org.apache.logging.log4j.Logger;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.ShiroException;
 import org.apache.shiro.subject.Subject;
+import org.apache.shiro.subject.support.SubjectThreadState;
+import org.apache.shiro.util.ThreadContext;
 import org.apache.shiro.util.ThreadState;
 
 import org.apache.geode.management.internal.security.ResourceOperation;
@@ -26,6 +42,7 @@ import org.apache.geode.security.ResourcePermission;
 import org.apache.geode.security.SecurityManager;
 
 public class CustomSecurityService implements SecurityService {
+  private static Logger logger = LogService.getLogger(LogService.SECURITY_LOGGER_NAME);
 
   CustomSecurityService() {
     // nothing
@@ -33,133 +50,222 @@ public class CustomSecurityService implements SecurityService {
 
   @Override
   public void initSecurity(final Properties securityProps) {
-
+    // nothing
   }
 
   @Override
   public void setSecurityManager(final SecurityManager securityManager) {
-
+    // nothing
   }
 
   @Override
   public void setPostProcessor(final PostProcessor postProcessor) {
-
+    // nothing
   }
 
   @Override
   public ThreadState bindSubject(final Subject subject) {
-    return null;
+    if (subject == null) {
+      return null;
+    }
+
+    ThreadState threadState = new SubjectThreadState(subject);
+    threadState.bind();
+    return threadState;
   }
 
   @Override
   public Subject getSubject() {
-    return null;
+    Subject currentUser;
+
+    // First try get the principal out of AccessControlContext instead of Shiro's Thread context
+    // since threads can be shared between JMX clients.
+    javax.security.auth.Subject jmxSubject =
+        javax.security.auth.Subject.getSubject(AccessController.getContext());
+
+    if (jmxSubject != null) {
+      Set<ShiroPrincipal> principals = jmxSubject.getPrincipals(ShiroPrincipal.class);
+      if (principals.size() > 0) {
+        ShiroPrincipal principal = principals.iterator().next();
+        currentUser = principal.getSubject();
+        ThreadContext.bind(currentUser);
+        return currentUser;
+      }
+    }
+
+    // in other cases like rest call, client operations, we get it from the current thread
+    currentUser = SecurityUtils.getSubject();
+
+    if (currentUser == null || currentUser.getPrincipal() == null) {
+      throw new GemFireSecurityException("Error: Anonymous User");
+    }
+
+    return currentUser;
   }
 
   @Override
   public Subject login(final Properties credentials) {
-    return null;
+    if (credentials == null) {
+      return null;
+    }
+
+    // this makes sure it starts with a clean user object
+    ThreadContext.remove();
+
+    Subject currentUser = SecurityUtils.getSubject();
+    GeodeAuthenticationToken token = new GeodeAuthenticationToken(credentials);
+    try {
+      logger.debug("Logging in " + token.getPrincipal());
+      currentUser.login(token);
+    } catch (ShiroException e) {
+      logger.info(e.getMessage(), e);
+      throw new AuthenticationFailedException(
+          "Authentication error. Please check your credentials.", e);
+    }
+
+    return currentUser;
   }
 
   @Override
   public void logout() {
+    Subject currentUser = getSubject();
+    if (currentUser == null) {
+      return;
+    }
 
+    try {
+      logger.debug("Logging out " + currentUser.getPrincipal());
+      currentUser.logout();
+    } catch (ShiroException e) {
+      logger.info(e.getMessage(), e);
+      throw new GemFireSecurityException(e.getMessage(), e);
+    }
+    // clean out Shiro's thread local content
+    ThreadContext.remove();
   }
 
   @Override
   public Callable associateWith(final Callable callable) {
-    return null;
+    Subject currentUser = getSubject();
+    if (currentUser == null) {
+      return callable;
+    }
+
+    return currentUser.associateWith(callable);
   }
 
   @Override
   public void authorize(final ResourceOperation resourceOperation) {
+    if (resourceOperation == null) {
+      return;
+    }
 
+    authorize(resourceOperation.resource().name(), resourceOperation.operation().name(), null);
   }
 
   @Override
   public void authorizeClusterManage() {
-
+    authorize("CLUSTER", "MANAGE");
   }
 
   @Override
   public void authorizeClusterWrite() {
-
+    authorize("CLUSTER", "WRITE");
   }
 
   @Override
   public void authorizeClusterRead() {
-
+    authorize("CLUSTER", "READ");
   }
 
   @Override
   public void authorizeDataManage() {
-
+    authorize("DATA", "MANAGE");
   }
 
   @Override
   public void authorizeDataWrite() {
-
+    authorize("DATA", "WRITE");
   }
 
   @Override
   public void authorizeDataRead() {
-
+    authorize("DATA", "READ");
   }
 
   @Override
   public void authorizeRegionManage(final String regionName) {
-
+    authorize("DATA", "MANAGE", regionName);
   }
 
   @Override
   public void authorizeRegionManage(final String regionName, final String key) {
-
+    authorize("DATA", "MANAGE", regionName, key);
   }
 
   @Override
   public void authorizeRegionWrite(final String regionName) {
-
+    authorize("DATA", "WRITE", regionName);
   }
 
   @Override
   public void authorizeRegionWrite(final String regionName, final String key) {
-
+    authorize("DATA", "WRITE", regionName, key);
   }
 
   @Override
   public void authorizeRegionRead(final String regionName) {
-
+    authorize("DATA", "READ", regionName);
   }
 
   @Override
   public void authorizeRegionRead(final String regionName, final String key) {
-
+    authorize("DATA", "READ", regionName, key);
   }
 
   @Override
   public void authorize(final String resource, final String operation) {
-
+    authorize(resource, operation, null);
   }
 
   @Override
   public void authorize(final String resource, final String operation, final String regionName) {
-
+    authorize(resource, operation, regionName, null);
   }
 
   @Override
-  public void authorize(final String resource, final String operation, final String regionName,
-      final String key) {
-
+  public void authorize(final String resource, final String operation, String regionName,
+                        final String key) {
+    regionName = StringUtils.stripStart(regionName, "/");
+    authorize(new ResourcePermission(resource, operation, regionName, key));
   }
 
   @Override
   public void authorize(final ResourcePermission context) {
+    Subject currentUser = getSubject();
+    if (currentUser == null) {
+      return;
+    }
+    if (context == null) {
+      return;
+    }
+    if (context.getResource() == Resource.NULL && context.getOperation() == Operation.NULL) {
+      return;
+    }
 
+    try {
+      currentUser.checkPermission(context);
+    } catch (ShiroException e) {
+      String msg = currentUser.getPrincipal() + " not authorized for " + context;
+      logger.info(msg);
+      throw new NotAuthorizedException(msg, e);
+    }
   }
 
   @Override
   public void close() {
-
+    ThreadContext.remove();
+    SecurityUtils.setSecurityManager(null);
   }
 
   @Override

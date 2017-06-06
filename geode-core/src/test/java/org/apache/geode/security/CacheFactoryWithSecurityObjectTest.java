@@ -12,7 +12,6 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package org.apache.geode.security;
 
 import static org.junit.Assert.assertFalse;
@@ -44,15 +43,15 @@ public class CacheFactoryWithSecurityObjectTest {
 
   @Before
   public void before() throws Exception {
-    simpleSecurityManager = new SimpleTestSecurityManager();
-    properties.setProperty("mcast-port", "0");
+    this.simpleSecurityManager = new SimpleTestSecurityManager();
+    this.properties.setProperty("mcast-port", "0");
   }
 
   @Test
   public void testCreateCacheWithSecurityManager() throws Exception {
-    cache = (InternalCache) new CacheFactory(properties).setSecurityManager(simpleSecurityManager)
-        .setPostProcessor(null).create();
-    SecurityService securityService = cache.getSecurityService();
+    this.cache = (InternalCache) new CacheFactory(this.properties)
+        .setSecurityManager(this.simpleSecurityManager).setPostProcessor(null).create();
+    SecurityService securityService = this.cache.getSecurityService();
     assertTrue(securityService.isIntegratedSecurity());
     assertFalse(securityService.needPostProcess());
     assertNotNull(securityService.getSecurityManager());
@@ -60,9 +59,9 @@ public class CacheFactoryWithSecurityObjectTest {
 
   @Test
   public void testCreateCacheWithPostProcessor() throws Exception {
-    cache = (InternalCache) new CacheFactory(properties).setPostProcessor(new TestPostProcessor())
-        .setSecurityManager(null).create();
-    SecurityService securityService = cache.getSecurityService();
+    this.cache = (InternalCache) new CacheFactory(this.properties)
+        .setPostProcessor(new TestPostProcessor()).setSecurityManager(null).create();
+    SecurityService securityService = this.cache.getSecurityService();
     assertFalse(securityService.isIntegratedSecurity());
     assertFalse(securityService.needPostProcess());
     assertNotNull(securityService.getPostProcessor());
@@ -70,13 +69,14 @@ public class CacheFactoryWithSecurityObjectTest {
 
   @Test
   public void testOverride() throws Exception {
-    properties.setProperty(ConfigurationProperties.SECURITY_CLIENT_AUTHENTICATOR,
+    this.properties.setProperty(ConfigurationProperties.SECURITY_CLIENT_AUTHENTICATOR,
         DummyAuthenticator.class.getName());
 
-    cache = (InternalCache) new CacheFactory(properties).setSecurityManager(simpleSecurityManager)
-        .setPostProcessor(new TestPostProcessor()).create();
+    this.cache = (InternalCache) new CacheFactory(this.properties)
+        .setSecurityManager(this.simpleSecurityManager).setPostProcessor(new TestPostProcessor())
+        .create();
 
-    SecurityService securityService = cache.getSecurityService();
+    SecurityService securityService = this.cache.getSecurityService();
 
     assertTrue(securityService.isIntegratedSecurity());
     assertTrue(securityService.isClientSecurityRequired());
@@ -86,7 +86,7 @@ public class CacheFactoryWithSecurityObjectTest {
 
   @After
   public void after() {
-    cache.close();
+    this.cache.close();
   }
 
 }

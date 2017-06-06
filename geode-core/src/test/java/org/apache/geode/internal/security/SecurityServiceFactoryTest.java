@@ -14,22 +14,33 @@
  */
 package org.apache.geode.internal.security;
 
-import static org.apache.geode.distributed.ConfigurationProperties.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import java.util.Properties;
+import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_CLIENT_AUTHENTICATOR;
+import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_MANAGER;
+import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_PEER_AUTHENTICATOR;
+import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_POST_PROCESSOR;
+import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_SHIRO_INIT;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import org.apache.geode.security.PostProcessor;
 import org.apache.geode.security.SecurityManager;
 import org.apache.geode.test.junit.categories.UnitTest;
-
-import org.junit.Ignore;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.util.ThreadContext;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.util.Properties;
+
 @Category(UnitTest.class)
 public class SecurityServiceFactoryTest {
+
+  @After
+  public void after() throws Exception {
+    ThreadContext.remove();
+    SecurityUtils.setSecurityManager(null);
+  }
 
   @Test
   public void getPostProcessor_null_returnsNull() throws Exception {
@@ -110,7 +121,7 @@ public class SecurityServiceFactoryTest {
 
   @Test
   public void determineType_null_returnsDISABLED() throws Exception {
-    assertThat(SecurityServiceFactory.determineType(null, null))
+    assertThat(SecurityServiceFactory.determineType(null, null, null))
         .isSameAs(SecurityServiceType.DISABLED);
   }
 
@@ -119,7 +130,7 @@ public class SecurityServiceFactoryTest {
     Properties securityConfig = new Properties();
     securityConfig.setProperty(SECURITY_SHIRO_INIT, "value");
 
-    assertThat(SecurityServiceFactory.determineType(securityConfig, null))
+    assertThat(SecurityServiceFactory.determineType(securityConfig, null, null))
         .isSameAs(SecurityServiceType.CUSTOM);
   }
 
@@ -128,8 +139,27 @@ public class SecurityServiceFactoryTest {
     Properties securityConfig = new Properties();
     SecurityManager mockSecurityManager = mock(SecurityManager.class);
 
-    assertThat(SecurityServiceFactory.determineType(securityConfig, mockSecurityManager))
+    assertThat(SecurityServiceFactory.determineType(securityConfig, mockSecurityManager, null))
         .isSameAs(SecurityServiceType.ENABLED);
+  }
+
+  @Test
+  public void determineType_postProcessor_returnsPOST_PROCESSOR() throws Exception {
+    Properties securityConfig = new Properties();
+    PostProcessor mockPostProcessor = mock(PostProcessor.class);
+
+    assertThat(SecurityServiceFactory.determineType(securityConfig, null, mockPostProcessor))
+        .isSameAs(SecurityServiceType.POST_PROCESSOR);
+  }
+
+  @Test
+  public void determineType_both_returnsENABLED() throws Exception {
+    Properties securityConfig = new Properties();
+    SecurityManager mockSecurityManager = mock(SecurityManager.class);
+    PostProcessor mockPostProcessor = mock(PostProcessor.class);
+
+    assertThat(SecurityServiceFactory.determineType(securityConfig, mockSecurityManager,
+        mockPostProcessor)).isSameAs(SecurityServiceType.ENABLED);
   }
 
   @Test
@@ -140,7 +170,7 @@ public class SecurityServiceFactoryTest {
     securityConfig.setProperty(SECURITY_PEER_AUTHENTICATOR, "value");
     SecurityManager mockSecurityManager = mock(SecurityManager.class);
 
-    assertThat(SecurityServiceFactory.determineType(securityConfig, mockSecurityManager))
+    assertThat(SecurityServiceFactory.determineType(securityConfig, mockSecurityManager, null))
         .isSameAs(SecurityServiceType.CUSTOM);
   }
 
@@ -149,7 +179,7 @@ public class SecurityServiceFactoryTest {
     Properties securityConfig = new Properties();
     securityConfig.setProperty(SECURITY_CLIENT_AUTHENTICATOR, "value");
 
-    assertThat(SecurityServiceFactory.determineType(securityConfig, null))
+    assertThat(SecurityServiceFactory.determineType(securityConfig, null, null))
         .isSameAs(SecurityServiceType.LEGACY);
   }
 
@@ -158,7 +188,7 @@ public class SecurityServiceFactoryTest {
     Properties securityConfig = new Properties();
     securityConfig.setProperty(SECURITY_PEER_AUTHENTICATOR, "value");
 
-    assertThat(SecurityServiceFactory.determineType(securityConfig, null))
+    assertThat(SecurityServiceFactory.determineType(securityConfig, null, null))
         .isSameAs(SecurityServiceType.LEGACY);
   }
 
@@ -168,7 +198,7 @@ public class SecurityServiceFactoryTest {
     securityConfig.setProperty(SECURITY_CLIENT_AUTHENTICATOR, "value");
     securityConfig.setProperty(SECURITY_PEER_AUTHENTICATOR, "value");
 
-    assertThat(SecurityServiceFactory.determineType(securityConfig, null))
+    assertThat(SecurityServiceFactory.determineType(securityConfig, null, null))
         .isSameAs(SecurityServiceType.LEGACY);
   }
 
@@ -176,18 +206,8 @@ public class SecurityServiceFactoryTest {
   public void determineType_empty_returnsDISABLED() throws Exception {
     Properties securityConfig = new Properties();
 
-    assertThat(SecurityServiceFactory.determineType(securityConfig, null))
+    assertThat(SecurityServiceFactory.determineType(securityConfig, null, null))
         .isSameAs(SecurityServiceType.DISABLED);
-  }
-
-  @Test
-  @Ignore("Move to IntegrationTest with shiro config")
-  public void create_shiro_createsCustomSecurityService() throws Exception {
-    Properties securityConfig = new Properties();
-    securityConfig.setProperty(SECURITY_SHIRO_INIT, "value");
-
-    assertThat(SecurityServiceFactory.create(securityConfig, null, null))
-        .isInstanceOf(CustomSecurityService.class);
   }
 
   @Test
@@ -219,26 +239,29 @@ public class SecurityServiceFactoryTest {
   }
 
   @Test
-  @Ignore("Move to IntegrationTest with shiro config")
-  public void create_all_createsCustomSecurityService() throws Exception {
-    Properties securityConfig = new Properties();
-    securityConfig.setProperty(SECURITY_SHIRO_INIT, "value");
-    securityConfig.setProperty(SECURITY_CLIENT_AUTHENTICATOR, "value");
-    securityConfig.setProperty(SECURITY_PEER_AUTHENTICATOR, "value");
-
-    SecurityManager mockSecurityManager = mock(SecurityManager.class);
-    PostProcessor mockPostProcessor = mock(PostProcessor.class);
-
-    assertThat(
-        SecurityServiceFactory.create(securityConfig, mockSecurityManager, mockPostProcessor))
-            .isInstanceOf(CustomSecurityService.class);
-  }
-
-  @Test
   public void create_none_createsDisabledSecurityService() throws Exception {
     Properties securityConfig = new Properties();
 
     assertThat(SecurityServiceFactory.create(securityConfig, null, null))
         .isInstanceOf(DisabledSecurityService.class);
   }
+
+  @Test
+  public void create_postProcessor_createsPostProcessorService() throws Exception {
+    Properties securityConfig = new Properties();
+    PostProcessor mockPostProcessor = mock(PostProcessor.class);
+
+    assertThat(SecurityServiceFactory.create(securityConfig, null, mockPostProcessor))
+        .isInstanceOf(PostProcessorService.class);
+  }
+
+  @Test
+  public void create_securityManager_createsPostProcessorService() throws Exception {
+    Properties securityConfig = new Properties();
+    SecurityManager mockSecurityManager = mock(SecurityManager.class);
+
+    assertThat(SecurityServiceFactory.create(securityConfig, mockSecurityManager, null))
+        .isInstanceOf(EnabledSecurityService.class);
+  }
+
 }

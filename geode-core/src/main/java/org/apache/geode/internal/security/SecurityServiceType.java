@@ -19,6 +19,8 @@ public enum SecurityServiceType {
   ENABLED,
   /** Security is Disabled */
   DISABLED,
+  /** Has PostProcessor only */
+  POST_PROCESSOR,
   /** Legacy Security is Enabled */
   LEGACY,
   /** Shiro Config is specified */

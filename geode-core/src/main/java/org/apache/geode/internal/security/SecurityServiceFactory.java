@@ -14,12 +14,13 @@
  */
 package org.apache.geode.internal.security;
 
-import static org.apache.geode.distributed.ConfigurationProperties.*;
-
-import java.util.Properties;
+import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_CLIENT_AUTHENTICATOR;
+import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_MANAGER;
+import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_PEER_AUTHENTICATOR;
+import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_POST_PROCESSOR;
+import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_SHIRO_INIT;
 
 import org.apache.commons.lang.StringUtils;
-
 import org.apache.geode.distributed.internal.DistributionConfig;
 import org.apache.geode.internal.cache.CacheConfig;
 import org.apache.geode.internal.security.shiro.ConfigInitialization;
@@ -27,6 +28,8 @@ import org.apache.geode.security.PostProcessor;
 import org.apache.geode.security.SecurityManager;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.UnavailableSecurityManagerException;
+
+import java.util.Properties;
 
 public class SecurityServiceFactory {
 
@@ -63,7 +66,7 @@ public class SecurityServiceFactory {
 
   public static SecurityService create(Properties securityConfig, SecurityManager securityManager,
       PostProcessor postProcessor) {
-    SecurityServiceType type = determineType(securityConfig, securityManager);
+    SecurityServiceType type = determineType(securityConfig, securityManager, postProcessor);
     switch (type) {
       case CUSTOM:
         String shiroConfig = getProperty(securityConfig, SECURITY_SHIRO_INIT);
@@ -74,6 +77,8 @@ public class SecurityServiceFactory {
         return new CustomSecurityService();
       case ENABLED:
         return new EnabledSecurityService(securityManager, postProcessor);
+      case POST_PROCESSOR:
+        return new PostProcessorService(postProcessor);
       case LEGACY:
         String clientAuthenticator = getProperty(securityConfig, SECURITY_CLIENT_AUTHENTICATOR);
         String peerAuthenticator = getProperty(securityConfig, SECURITY_PEER_AUTHENTICATOR);
@@ -84,7 +89,7 @@ public class SecurityServiceFactory {
   }
 
   static SecurityServiceType determineType(Properties securityConfig,
-      SecurityManager securityManager) {
+      SecurityManager securityManager, PostProcessor postProcessor) {
     boolean hasShiroConfig = hasProperty(securityConfig, SECURITY_SHIRO_INIT);
     if (hasShiroConfig) {
       return SecurityServiceType.CUSTOM;
@@ -104,6 +109,11 @@ public class SecurityServiceFactory {
     boolean isShiroInUse = isShiroInUse();
     if (isShiroInUse) {
       return SecurityServiceType.CUSTOM;
+    }
+
+    boolean hasPostProcessor = postProcessor != null;
+    if (hasPostProcessor) {
+      return SecurityServiceType.POST_PROCESSOR;
     }
 
     return SecurityServiceType.DISABLED;
@@ -184,5 +194,4 @@ public class SecurityServiceFactory {
       securityService.initSecurity(distributionConfig.getSecurityProps());
     }
   }
-
 }
