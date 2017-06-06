@@ -15,11 +15,13 @@
 package org.apache.geode.management.internal.security;
 
 import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_MANAGER;
+import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_SHIRO_INIT;
 
+import org.apache.geode.internal.security.SecurityServiceFactory;
 import org.apache.geode.security.TestSecurityManager;
 import org.apache.geode.test.junit.categories.IntegrationTest;
 import org.apache.geode.test.junit.categories.SecurityTest;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.experimental.categories.Category;
 
 /**
@@ -31,12 +33,12 @@ import org.junit.experimental.categories.Category;
 public class SecurityServiceWithCustomRealmIntegrationTest
     extends SecurityServiceWithShiroIniIntegrationTest {
 
-  @BeforeClass
-  public static void beforeClass() throws Exception {
-    props.put(TestSecurityManager.SECURITY_JSON,
+  @Before
+  public void before() throws Exception {
+    this.props.setProperty(TestSecurityManager.SECURITY_JSON,
         "org/apache/geode/management/internal/security/shiro-ini.json");
-    props.put(SECURITY_MANAGER, TestSecurityManager.class.getName());
-    // TODO: inject props into gemfire.properties
+    this.props.setProperty(SECURITY_MANAGER, TestSecurityManager.class.getName());
+    this.props.setProperty(SECURITY_SHIRO_INIT, "shiro.ini");
+    this.securityService = SecurityServiceFactory.create(this.props, null, null);
   }
-
 }
