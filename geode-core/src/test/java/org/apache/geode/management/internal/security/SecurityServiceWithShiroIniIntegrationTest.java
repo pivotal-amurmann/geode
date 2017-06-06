@@ -17,7 +17,6 @@ package org.apache.geode.management.internal.security;
 import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_SHIRO_INIT;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.apache.geode.internal.security.IntegratedSecurityService;
 import org.apache.geode.internal.security.SecurityService;
 import org.apache.geode.internal.security.SecurityServiceFactory;
 import org.apache.geode.security.GemFireSecurityException;
@@ -32,7 +31,7 @@ import org.junit.experimental.categories.Category;
 import java.util.Properties;
 
 /**
- * Integration tests for {@link IntegratedSecurityService} using shiro.ini
+ * Integration tests for SecurityService using shiro.ini
  */
 @Category({IntegrationTest.class, SecurityTest.class})
 public class SecurityServiceWithShiroIniIntegrationTest {

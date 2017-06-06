@@ -32,9 +32,11 @@ public interface SecurityService {
 
   void initSecurity(Properties securityProps);
 
-  void setSecurityManager(SecurityManager securityManager); // TODO:KIRK: delete
+  // TODO: delete setSecurityManager
+  void setSecurityManager(SecurityManager securityManager);
 
-  void setPostProcessor(PostProcessor postProcessor); // TODO:KIRK: delete
+  // TODO: delete setPostProcessor
+  void setPostProcessor(PostProcessor postProcessor);
 
   ThreadState bindSubject(Subject subject);
 
@@ -44,6 +46,7 @@ public interface SecurityService {
 
   void logout();
 
+  // TODO: define Callable<type>
   Callable associateWith(Callable callable);
 
   void authorize(ResourceOperation resourceOperation);
@@ -173,11 +176,6 @@ public interface SecurityService {
           securityProps.getProperty(ResourceConstants.PASSWORD));
     }
     return credentials;
-  }
-
-  static SecurityService getSecurityService() {
-    // TODO:KIRK
-    return IntegratedSecurityService.getSecurityService();
   }
 
 }

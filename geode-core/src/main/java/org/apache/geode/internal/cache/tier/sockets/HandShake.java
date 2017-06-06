@@ -48,9 +48,8 @@ import org.apache.geode.internal.cache.tier.ConnectionProxy;
 import org.apache.geode.internal.i18n.LocalizedStrings;
 import org.apache.geode.internal.logging.InternalLogWriter;
 import org.apache.geode.internal.logging.LogService;
-import org.apache.geode.internal.security.DisabledSecurityService;
-import org.apache.geode.internal.security.IntegratedSecurityService;
 import org.apache.geode.internal.security.SecurityService;
+import org.apache.geode.internal.security.SecurityServiceFactory;
 import org.apache.geode.pdx.internal.PeerTypeRegistration;
 import org.apache.geode.security.AuthInitialize;
 import org.apache.geode.security.AuthenticationFailedException;
@@ -249,7 +248,7 @@ public class HandShake implements ClientHandShake {
   protected HandShake() {
     system = null;
     id = null;
-    this.securityService = new DisabledSecurityService();
+    this.securityService = SecurityServiceFactory.create();
   }
 
   /**
@@ -338,7 +337,7 @@ public class HandShake implements ClientHandShake {
     this.system = sys;
     setOverrides();
     this.credentials = null;
-    this.securityService = new DisabledSecurityService();
+    this.securityService = SecurityServiceFactory.create();
   }
 
   public void updateProxyID(InternalDistributedMember idm) {

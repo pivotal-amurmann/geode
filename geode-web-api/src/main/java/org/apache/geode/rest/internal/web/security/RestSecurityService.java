@@ -16,8 +16,8 @@ package org.apache.geode.rest.internal.web.security;
 
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.internal.cache.InternalCache;
-import org.apache.geode.internal.security.DisabledSecurityService;
 import org.apache.geode.internal.security.SecurityService;
+import org.apache.geode.internal.security.SecurityServiceFactory;
 import org.apache.geode.security.GemFireSecurityException;
 import org.springframework.stereotype.Component;
 
@@ -31,7 +31,7 @@ public class RestSecurityService {
     if (cache != null) {
       this.securityService = cache.getSecurityService();
     } else {
-      this.securityService = new DisabledSecurityService();
+      this.securityService = SecurityServiceFactory.create();
     }
   }
 

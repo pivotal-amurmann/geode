@@ -18,8 +18,8 @@ import org.apache.geode.distributed.internal.DistributionConfig;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.internal.cache.InternalCache;
 import org.apache.geode.internal.logging.LogService;
-import org.apache.geode.internal.security.DisabledSecurityService;
 import org.apache.geode.internal.security.SecurityService;
+import org.apache.geode.internal.security.SecurityServiceFactory;
 import org.apache.geode.management.internal.cli.multistep.CLIMultiStepHelper;
 import org.apache.geode.management.internal.security.ResourceConstants;
 import org.apache.geode.management.internal.web.util.UriUtils;
@@ -81,7 +81,7 @@ public class LoginHandlerInterceptor extends HandlerInterceptorAdapter {
     if (cache != null) {
       return cache.getSecurityService();
     }
-    return new DisabledSecurityService();
+    return SecurityServiceFactory.create();
   }
 
   @Override

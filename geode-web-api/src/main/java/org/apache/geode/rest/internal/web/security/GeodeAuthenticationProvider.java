@@ -18,8 +18,8 @@ package org.apache.geode.rest.internal.web.security;
 
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.internal.cache.InternalCache;
-import org.apache.geode.internal.security.DisabledSecurityService;
 import org.apache.geode.internal.security.SecurityService;
+import org.apache.geode.internal.security.SecurityServiceFactory;
 import org.apache.geode.management.internal.security.ResourceConstants;
 import org.apache.geode.security.GemFireSecurityException;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -48,7 +48,7 @@ public class GeodeAuthenticationProvider implements AuthenticationProvider {
     if (cache != null) {
       return cache.getSecurityService();
     } else {
-      return new DisabledSecurityService();
+      return SecurityServiceFactory.create();
     }
   }
 

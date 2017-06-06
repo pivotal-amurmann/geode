@@ -14,18 +14,16 @@
  */
 package org.apache.geode.management.internal.security;
 
-import static org.apache.geode.distributed.ConfigurationProperties.*;
+import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_MANAGER;
 
 import org.apache.geode.security.TestSecurityManager;
+import org.apache.geode.test.junit.categories.IntegrationTest;
+import org.apache.geode.test.junit.categories.SecurityTest;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
 
-import org.apache.geode.internal.security.IntegratedSecurityService;
-import org.apache.geode.test.junit.categories.IntegrationTest;
-import org.apache.geode.test.junit.categories.SecurityTest;
-
 /**
- * Integration tests for {@link IntegratedSecurityService} using shiro-ini.json.
+ * Integration tests for SecurityService using shiro-ini.json.
  *
  * @see SecurityServiceWithShiroIniIntegrationTest
  */
@@ -38,7 +36,7 @@ public class SecurityServiceWithCustomRealmIntegrationTest
     props.put(TestSecurityManager.SECURITY_JSON,
         "org/apache/geode/management/internal/security/shiro-ini.json");
     props.put(SECURITY_MANAGER, TestSecurityManager.class.getName());
-    IntegratedSecurityService.getSecurityService().initSecurity(props);
+    // TODO: inject props into gemfire.properties
   }
 
 }

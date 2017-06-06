@@ -105,7 +105,7 @@ public class SecurityServiceTest {
 
   @Test
   public void testInitialSecurityFlags() {
-    // initial state of IntegratedSecurityService
+    // initial state of SecurityService
     assertFalse(this.securityService.isIntegratedSecurity());
     assertFalse(this.securityService.isClientSecurityRequired());
     assertFalse(this.securityService.isPeerSecurityRequired());

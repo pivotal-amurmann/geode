@@ -14,7 +14,6 @@
  */
 package org.apache.geode.management.internal.security;
 
-import org.apache.geode.internal.security.IntegratedSecurityService;
 import org.apache.geode.internal.security.SecurityService;
 import org.apache.geode.security.GemFireSecurityException;
 

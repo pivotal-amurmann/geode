@@ -54,8 +54,6 @@ import org.apache.geode.security.SecurityManager;
 
 /**
  * Security service with SecurityManager and an optional PostProcessor.
- *
- * TODO: rename EnabledSecurityService to IntegratedSecurityService
  */
 public class EnabledSecurityService implements SecurityService {
   private static Logger logger = LogService.getLogger(LogService.SECURITY_LOGGER_NAME);
@@ -173,7 +171,7 @@ public class EnabledSecurityService implements SecurityService {
     ThreadContext.remove();
   }
 
-  @Override // TODO: give Callable a type
+  @Override
   public Callable associateWith(final Callable callable) {
     Subject currentUser = getSubject();
     if (currentUser == null) {
@@ -189,7 +187,7 @@ public class EnabledSecurityService implements SecurityService {
    * <pre>
    * ThreadState state = null;
    * try {
-   *   state = IntegratedSecurityService.bindSubject(subject);
+   *   state = securityService.bindSubject(subject);
    *   // do the rest of the work as this subject
    * } finally {
    *   if (state != null)
