@@ -3788,7 +3788,7 @@ public class GemFireCacheImpl implements InternalCache, InternalClientCache, Has
     }
     this.stopper.checkCancelInProgress(null);
 
-    CacheServerImpl cacheServer = new CacheServerImpl(this, isGatewayReceiver); // TODO:KIRK
+    CacheServerImpl cacheServer = new CacheServerImpl(this, isGatewayReceiver);
     this.allCacheServers.add(cacheServer);
 
     sendAddCacheServerProfileMessage();
