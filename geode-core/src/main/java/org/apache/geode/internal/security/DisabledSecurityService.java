@@ -18,6 +18,7 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import org.apache.shiro.subject.Subject;
+import org.apache.shiro.subject.support.SubjectThreadState;
 import org.apache.shiro.util.ThreadState;
 
 import org.apache.geode.management.internal.security.ResourceOperation;
@@ -51,7 +52,13 @@ public class DisabledSecurityService implements SecurityService {
 
   @Override
   public ThreadState bindSubject(final Subject subject) {
-    return null;
+    if (subject == null) {
+      return null;
+    }
+
+    ThreadState threadState = new SubjectThreadState(subject);
+    threadState.bind();
+    return threadState;
   }
 
   @Override
@@ -71,7 +78,7 @@ public class DisabledSecurityService implements SecurityService {
 
   @Override
   public Callable associateWith(final Callable callable) {
-    return null;
+    return callable;
   }
 
   @Override
