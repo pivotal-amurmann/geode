@@ -91,9 +91,10 @@ public class ClusterConfigWithoutSecurityDUnitTest {
     props.setProperty(SECURITY_MANAGER, SimpleTestSecurityManager.class.getName());
     props.setProperty(USE_CLUSTER_CONFIGURATION, "true");
 
-    assertThatThrownBy(() -> this.serverStarter.startServer(props, this.lsRule.getMember(0).getPort()))
-        .isInstanceOf(GemFireConfigException.class)
-        .hasMessage(LocalizedStrings.GEMFIRE_CACHE_SECURITY_MISCONFIGURATION.toLocalizedString());
+    assertThatThrownBy(
+        () -> this.serverStarter.startServer(props, this.lsRule.getMember(0).getPort()))
+            .isInstanceOf(GemFireConfigException.class).hasMessage(
+                LocalizedStrings.GEMFIRE_CACHE_SECURITY_MISCONFIGURATION.toLocalizedString());
   }
 
   @Test
@@ -102,9 +103,9 @@ public class ClusterConfigWithoutSecurityDUnitTest {
     props.setProperty(SECURITY_MANAGER, "mySecurityManager");
     props.setProperty(USE_CLUSTER_CONFIGURATION, "true");
 
-    assertThatThrownBy(() -> this.serverStarter.startServer(props, this.lsRule.getMember(0).getPort()))
-        .isInstanceOf(GemFireSecurityException.class)
-        .hasMessage("Instance could not be obtained, java.lang.ClassNotFoundException: mySecurityManager");
+    assertThatThrownBy(() -> this.serverStarter.startServer(props, this.lsRule.getMember(0)
+        .getPort())).isInstanceOf(GemFireSecurityException.class).hasMessage(
+            "Instance could not be obtained, java.lang.ClassNotFoundException: mySecurityManager");
   }
 
 }

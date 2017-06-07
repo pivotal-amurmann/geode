@@ -106,7 +106,8 @@ public class SecurityClusterConfigDUnitTest {
   }
 
   @Test
-  public void serverWithDifferentSecurityManagerShouldThrowGemFireConfigException() throws Exception {
+  public void serverWithDifferentSecurityManagerShouldThrowGemFireConfigException()
+      throws Exception {
     Properties props = new Properties();
 
     // the following are needed for peer-to-peer authentication
@@ -116,9 +117,10 @@ public class SecurityClusterConfigDUnitTest {
     props.setProperty(USE_CLUSTER_CONFIGURATION, "true");
 
     // initial security properties should only contain initial set of values
-    assertThatThrownBy(() -> this.serverStarter.startServer(props, this.lsRule.getMember(0).getPort()))
-        .isInstanceOf(GemFireConfigException.class)
-        .hasMessage(LocalizedStrings.GEMFIRE_CACHE_SECURITY_MISCONFIGURATION.toLocalizedString());
+    assertThatThrownBy(
+        () -> this.serverStarter.startServer(props, this.lsRule.getMember(0).getPort()))
+            .isInstanceOf(GemFireConfigException.class).hasMessage(
+                LocalizedStrings.GEMFIRE_CACHE_SECURITY_MISCONFIGURATION.toLocalizedString());
   }
 
   @Test
@@ -133,9 +135,10 @@ public class SecurityClusterConfigDUnitTest {
     props.setProperty(USE_CLUSTER_CONFIGURATION, "true");
 
     // initial security properties should only contain initial set of values
-    assertThatThrownBy(() -> this.serverStarter.startServer(props, this.lsRule.getMember(0).getPort()))
-        .isInstanceOf(GemFireConfigException.class)
-        .hasMessage(LocalizedStrings.GEMFIRE_CACHE_SECURITY_MISCONFIGURATION.toLocalizedString());
+    assertThatThrownBy(
+        () -> this.serverStarter.startServer(props, this.lsRule.getMember(0).getPort()))
+            .isInstanceOf(GemFireConfigException.class).hasMessage(
+                LocalizedStrings.GEMFIRE_CACHE_SECURITY_MISCONFIGURATION.toLocalizedString());
   }
 
   @Test
@@ -148,9 +151,10 @@ public class SecurityClusterConfigDUnitTest {
     props.setProperty(SECURITY_MANAGER, SimpleTestSecurityManager.class.getName());
     props.setProperty(USE_CLUSTER_CONFIGURATION, "false");
 
-    assertThatThrownBy(() -> this.serverStarter.startServer(props, this.lsRule.getMember(0).getPort()))
-        .isInstanceOf(GemFireConfigException.class)
-        .hasMessage(LocalizedStrings.GEMFIRE_CACHE_SECURITY_MISCONFIGURATION_2.toLocalizedString());
+    assertThatThrownBy(
+        () -> this.serverStarter.startServer(props, this.lsRule.getMember(0).getPort()))
+            .isInstanceOf(GemFireConfigException.class).hasMessage(
+                LocalizedStrings.GEMFIRE_CACHE_SECURITY_MISCONFIGURATION_2.toLocalizedString());
   }
 
 }

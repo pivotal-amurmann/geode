@@ -194,7 +194,8 @@ public class PDXPostProcessorDUnitTest extends JUnit4DistributedTestCase {
 
     PDXPostProcessor pp =
         (PDXPostProcessor) this.server.getCache().getSecurityService().getPostProcessor();
-    Awaitility.await().atMost(2, TimeUnit.MINUTES).until(() -> assertThat(pp.getCount()).isEqualTo(2));
+    Awaitility.await().atMost(2, TimeUnit.MINUTES)
+        .until(() -> assertThat(pp.getCount()).isEqualTo(2));
   }
 
   @Test
@@ -211,8 +212,8 @@ public class PDXPostProcessorDUnitTest extends JUnit4DistributedTestCase {
 
     this.client1.invoke(() -> {
       GfshShellConnectionRule gfsh = new GfshShellConnectionRule();
-      gfsh.secureConnectAndVerify(this.server.getJmxPort(), GfshShellConnectionRule.PortType.jmxManger,
-          "dataUser", "1234567");
+      gfsh.secureConnectAndVerify(this.server.getJmxPort(),
+          GfshShellConnectionRule.PortType.jmxManger, "dataUser", "1234567");
 
       // get command
       CommandResult result = gfsh.executeAndVerifyCommand("get --key=key1 --region=AuthRegion");
@@ -229,7 +230,8 @@ public class PDXPostProcessorDUnitTest extends JUnit4DistributedTestCase {
       gfsh.close();
     });
 
-    PDXPostProcessor pp = (PDXPostProcessor) this.server.getCache().getSecurityService().getPostProcessor();
+    PDXPostProcessor pp =
+        (PDXPostProcessor) this.server.getCache().getSecurityService().getPostProcessor();
     assertThat(pp).isNotNull(); // TODO: what else to check here?
   }
 

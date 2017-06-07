@@ -271,11 +271,12 @@ public abstract class CliCommandTestBase extends JUnit4CacheTestCase {
     CommandResult result = executeCommand(shell, command.toString());
 
     if (!shell.isConnectedAndReady()) {
-      throw new AssertionError("Execution of " + command + " failed to connect to manager " + endpoint
-          + " result=" + commandResultToString(result));
+      throw new AssertionError("Execution of " + command + " failed to connect to manager "
+          + endpoint + " result=" + commandResultToString(result));
     }
 
-    info("Successfully connected to managing node using " + (this.useHttpOnConnect ? "HTTP" : "JMX"));
+    info("Successfully connected to managing node using "
+        + (this.useHttpOnConnect ? "HTTP" : "JMX"));
     assertThat(shell.isConnectedAndReady()).isTrue();
   }
 
@@ -305,7 +306,7 @@ public abstract class CliCommandTestBase extends JUnit4CacheTestCase {
       // Added to avoid trimming of the columns
       info("Started testable shell: " + shell);
       return shell;
-    } catch (ClassNotFoundException|IOException e) {
+    } catch (ClassNotFoundException | IOException e) {
       throw new AssertionError(e);
     }
   }
