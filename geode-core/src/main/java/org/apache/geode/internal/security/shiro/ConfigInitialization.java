@@ -17,6 +17,7 @@ package org.apache.geode.internal.security.shiro;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.config.Ini.Section;
 import org.apache.shiro.config.IniSecurityManagerFactory;
+import org.apache.shiro.mgt.SecurityManager;
 
 public class ConfigInitialization {
 
@@ -32,13 +33,12 @@ public class ConfigInitialization {
 
     // we will need to make sure that shiro uses a case sensitive permission resolver
     Section main = factory.getIni().addSection("main");
-    main.put("geodePermissionResolver",
-        "org.apache.geode.internal.security.shiro.GeodePermissionResolver");
+    main.put("geodePermissionResolver", GeodePermissionResolver.class.getName());
     if (!main.containsKey("iniRealm.permissionResolver")) {
       main.put("iniRealm.permissionResolver", "$geodePermissionResolver");
     }
 
-    org.apache.shiro.mgt.SecurityManager securityManager = factory.getInstance();
+    SecurityManager securityManager = factory.getInstance();
     SecurityUtils.setSecurityManager(securityManager);
   }
 

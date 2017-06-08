@@ -14,8 +14,6 @@
  */
 package org.apache.geode.internal.cache.tier.sockets.command;
 
-import java.io.IOException;
-
 import org.apache.geode.cache.query.CqException;
 import org.apache.geode.cache.query.internal.cq.CqService;
 import org.apache.geode.internal.cache.tier.CachedRegionHelper;
@@ -26,15 +24,19 @@ import org.apache.geode.internal.cache.tier.sockets.ServerConnection;
 import org.apache.geode.internal.i18n.LocalizedStrings;
 import org.apache.geode.internal.security.SecurityService;
 
+import java.io.IOException;
+
 public class MonitorCQ extends BaseCQCommand {
 
-  private final static MonitorCQ singleton = new MonitorCQ();
+  private static final MonitorCQ singleton = new MonitorCQ();
 
   public static Command getCommand() {
     return singleton;
   }
 
-  private MonitorCQ() {}
+  private MonitorCQ() {
+    // nothing
+  }
 
   @Override
   public void cmdExecute(final Message clientMessage, final ServerConnection serverConnection,
@@ -50,7 +52,7 @@ public class MonitorCQ extends BaseCQCommand {
       String err = LocalizedStrings.MonitorCQ__0_THE_MONITORCQ_OPERATION_IS_INVALID
           .toLocalizedString(serverConnection.getName());
       sendCqResponse(MessageType.CQDATAERROR_MSG_TYPE, err, clientMessage.getTransactionId(), null,
-          serverConnection, securityService);
+          serverConnection);
       return;
     }
 
@@ -64,15 +66,14 @@ public class MonitorCQ extends BaseCQCommand {
             LocalizedStrings.MonitorCQ__0_A_NULL_REGION_NAME_WAS_PASSED_FOR_MONITORCQ_OPERATION
                 .toLocalizedString(serverConnection.getName());
         sendCqResponse(MessageType.CQDATAERROR_MSG_TYPE, err, clientMessage.getTransactionId(),
-            null, serverConnection, securityService);
+            null, serverConnection);
         return;
       }
     }
 
     if (logger.isDebugEnabled()) {
       logger.debug("{}: Received MonitorCq request from {} op: {}{}", serverConnection.getName(),
-          serverConnection.getSocketString(), op,
-          (regionName != null) ? " RegionName: " + regionName : "");
+          serverConnection.getSocketString(), op, regionName != null ? " RegionName: " + regionName : "");
     }
 
     securityService.authorizeClusterRead();
@@ -90,14 +91,12 @@ public class MonitorCQ extends BaseCQCommand {
           LocalizedStrings.CqService_INVALID_CQ_MONITOR_REQUEST_RECEIVED.toLocalizedString());
     } catch (CqException cqe) {
       sendCqResponse(MessageType.CQ_EXCEPTION_TYPE, "", clientMessage.getTransactionId(), cqe,
-          serverConnection, securityService);
-      return;
+          serverConnection);
     } catch (Exception e) {
       String err = LocalizedStrings.MonitorCQ_EXCEPTION_WHILE_HANDLING_THE_MONITOR_REQUEST_OP_IS_0
-          .toLocalizedString(Integer.valueOf(op));
+          .toLocalizedString(op);
       sendCqResponse(MessageType.CQ_EXCEPTION_TYPE, err, clientMessage.getTransactionId(), e,
-          serverConnection, securityService);
-      return;
+          serverConnection);
     }
   }
 

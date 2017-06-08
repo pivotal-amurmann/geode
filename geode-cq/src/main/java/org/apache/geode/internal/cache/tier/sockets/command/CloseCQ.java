@@ -14,10 +14,6 @@
  */
 package org.apache.geode.internal.cache.tier.sockets.command;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.geode.cache.query.CqException;
 import org.apache.geode.cache.query.internal.cq.CqService;
 import org.apache.geode.cache.query.internal.cq.InternalCqQuery;
@@ -33,15 +29,21 @@ import org.apache.geode.internal.i18n.LocalizedStrings;
 import org.apache.geode.internal.security.AuthorizeRequest;
 import org.apache.geode.internal.security.SecurityService;
 
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+
 public class CloseCQ extends BaseCQCommand {
 
-  private final static CloseCQ singleton = new CloseCQ();
+  private static final CloseCQ singleton = new CloseCQ();
 
   public static Command getCommand() {
     return singleton;
   }
 
-  private CloseCQ() {}
+  private CloseCQ() {
+    // nothing
+  }
 
   @Override
   public void cmdExecute(final Message clientMessage, final ServerConnection serverConnection,
@@ -50,8 +52,6 @@ public class CloseCQ extends BaseCQCommand {
     ClientProxyMembershipID id = serverConnection.getProxyID();
     CacheServerStats stats = serverConnection.getCacheServerStats();
 
-    // Based on MessageType.QUERY
-    // Added by Rao 2/1/2007
     serverConnection.setAsTrue(REQUIRES_RESPONSE);
     serverConnection.setAsTrue(REQUIRES_CHUNKED_RESPONSE);
 
@@ -69,7 +69,7 @@ public class CloseCQ extends BaseCQCommand {
       String err =
           LocalizedStrings.CloseCQ_THE_CQNAME_FOR_THE_CQ_CLOSE_REQUEST_IS_NULL.toLocalizedString();
       sendCqResponse(MessageType.CQDATAERROR_MSG_TYPE, err, clientMessage.getTransactionId(), null,
-          serverConnection, securityService);
+          serverConnection);
       return;
     }
 
@@ -89,45 +89,40 @@ public class CloseCQ extends BaseCQCommand {
 
       AuthorizeRequest authzRequest = serverConnection.getAuthzRequest();
       if (authzRequest != null) {
-        String queryStr = null;
-        Set cqRegionNames = null;
 
         if (cqQuery != null) {
-          queryStr = cqQuery.getQueryString();
-          cqRegionNames = new HashSet();
-          cqRegionNames.add(((InternalCqQuery) cqQuery).getRegionName());
+          String queryStr = cqQuery.getQueryString();
+          Set cqRegionNames = new HashSet();
+          cqRegionNames.add(cqQuery.getRegionName());
           authzRequest.closeCQAuthorize(cqName, queryStr, cqRegionNames);
         }
 
       }
-      // String cqNameWithClientId = new String(cqName + "__" +
-      // getMembershipID());
+
       cqService.closeCq(cqName, id);
       if (cqQuery != null)
         serverConnection.removeCq(cqName, cqQuery.isDurable());
     } catch (CqException cqe) {
       sendCqResponse(MessageType.CQ_EXCEPTION_TYPE, "", clientMessage.getTransactionId(), cqe,
-          serverConnection, securityService);
+          serverConnection);
       return;
     } catch (Exception e) {
       String err =
           LocalizedStrings.CloseCQ_EXCEPTION_WHILE_CLOSING_CQ_CQNAME_0.toLocalizedString(cqName);
       sendCqResponse(MessageType.CQ_EXCEPTION_TYPE, err, clientMessage.getTransactionId(), e,
-          serverConnection, securityService);
+          serverConnection);
       return;
     }
 
     // Send OK to client
     sendCqResponse(MessageType.REPLY,
         LocalizedStrings.CloseCQ_CQ_CLOSED_SUCCESSFULLY.toLocalizedString(),
-        clientMessage.getTransactionId(), null, serverConnection, securityService);
+        clientMessage.getTransactionId(), null, serverConnection);
     serverConnection.setAsTrue(RESPONDED);
 
-    {
-      long oldStart = start;
-      start = DistributionStats.getStatTime();
-      stats.incProcessCloseCqTime(start - oldStart);
-    }
+    long oldStart = start;
+    start = DistributionStats.getStatTime();
+    stats.incProcessCloseCqTime(start - oldStart);
   }
 
 }

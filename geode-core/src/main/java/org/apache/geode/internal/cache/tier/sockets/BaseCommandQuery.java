@@ -14,12 +14,6 @@
  */
 package org.apache.geode.internal.cache.tier.sockets;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.geode.cache.RegionDestroyedException;
 import org.apache.geode.cache.operations.QueryOperationContext;
 import org.apache.geode.cache.query.Query;
@@ -43,6 +37,12 @@ import org.apache.geode.internal.i18n.LocalizedStrings;
 import org.apache.geode.internal.logging.log4j.LocalizedMessage;
 import org.apache.geode.internal.security.AuthorizeRequestPP;
 import org.apache.geode.internal.security.SecurityService;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 public abstract class BaseCommandQuery extends BaseCommand {
 
@@ -298,8 +298,7 @@ public abstract class BaseCommandQuery extends BaseCommand {
     return false;
   }
 
-  protected void sendCqResponse(int msgType, String msgStr, int txId, Throwable e,
-      ServerConnection servConn, final SecurityService securityService) throws IOException {
+  protected void sendCqResponse(int msgType, String msgStr, int txId, Throwable e, ServerConnection servConn) throws IOException {
     ChunkedMessage cqMsg = servConn.getChunkedResponseMessage();
     if (logger.isDebugEnabled()) {
       logger.debug("CQ Response message :{}", msgStr);

@@ -14,8 +14,6 @@
  */
 package org.apache.geode.internal.cache.tier.sockets.command;
 
-import java.io.IOException;
-
 import org.apache.geode.cache.query.internal.cq.CqService;
 import org.apache.geode.distributed.internal.DistributionStats;
 import org.apache.geode.internal.cache.tier.CachedRegionHelper;
@@ -26,15 +24,19 @@ import org.apache.geode.internal.cache.tier.sockets.Message;
 import org.apache.geode.internal.cache.tier.sockets.ServerConnection;
 import org.apache.geode.internal.security.SecurityService;
 
+import java.io.IOException;
+
 public class GetCQStats extends BaseCQCommand {
 
-  private final static GetCQStats singleton = new GetCQStats();
+  private static final GetCQStats singleton = new GetCQStats();
 
   public static Command getCommand() {
     return singleton;
   }
 
-  private GetCQStats() {}
+  private GetCQStats() {
+    // nothing
+  }
 
   @Override
   public void cmdExecute(final Message clientMessage, final ServerConnection serverConnection,
@@ -64,7 +66,7 @@ public class GetCQStats extends BaseCQCommand {
     if (cqName == null) {
       String err = "The cqName for the cq stats request is null";
       sendCqResponse(MessageType.CQDATAERROR_MSG_TYPE, err, clientMessage.getTransactionId(), null,
-          serverConnection, securityService);
+          serverConnection);
       return;
     }
 
@@ -78,19 +80,17 @@ public class GetCQStats extends BaseCQCommand {
     } catch (Exception e) {
       String err = "Exception while Getting the CQ Statistics. ";
       sendCqResponse(MessageType.CQ_EXCEPTION_TYPE, err, clientMessage.getTransactionId(), e,
-          serverConnection, securityService);
+          serverConnection);
       return;
     }
     // Send OK to client
     sendCqResponse(MessageType.REPLY, "cq stats sent successfully.",
-        clientMessage.getTransactionId(), null, serverConnection, securityService);
+        clientMessage.getTransactionId(), null, serverConnection);
     serverConnection.setAsTrue(RESPONDED);
 
-    {
-      long oldStart = start;
-      start = DistributionStats.getStatTime();
-      stats.incProcessGetCqStatsTime(start - oldStart);
-    }
+    long oldStart = start;
+    start = DistributionStats.getStatTime();
+    stats.incProcessGetCqStatsTime(start - oldStart);
   }
 
 }

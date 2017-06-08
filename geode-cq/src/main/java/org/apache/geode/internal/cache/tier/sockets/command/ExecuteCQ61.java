@@ -14,11 +14,6 @@
  */
 package org.apache.geode.internal.cache.tier.sockets.command;
 
-import java.io.IOException;
-import java.util.Set;
-
-import org.apache.logging.log4j.Logger;
-
 import org.apache.geode.cache.operations.ExecuteCQOperationContext;
 import org.apache.geode.cache.query.CqException;
 import org.apache.geode.cache.query.Query;
@@ -45,6 +40,10 @@ import org.apache.geode.internal.i18n.LocalizedStrings;
 import org.apache.geode.internal.logging.LogService;
 import org.apache.geode.internal.security.AuthorizeRequest;
 import org.apache.geode.internal.security.SecurityService;
+import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.util.Set;
 
 /**
  * @since GemFire 6.1
@@ -52,13 +51,15 @@ import org.apache.geode.internal.security.SecurityService;
 public class ExecuteCQ61 extends BaseCQCommand {
   protected static final Logger logger = LogService.getLogger();
 
-  private final static ExecuteCQ61 singleton = new ExecuteCQ61();
+  private static final ExecuteCQ61 singleton = new ExecuteCQ61();
 
   public static Command getCommand() {
     return singleton;
   }
 
-  private ExecuteCQ61() {}
+  private ExecuteCQ61() {
+    // nothing
+  }
 
   @Override
   public void cmdExecute(final Message clientMessage, final ServerConnection serverConnection,
@@ -78,7 +79,7 @@ public class ExecuteCQ61 extends BaseCQCommand {
 
     Part isDurablePart = clientMessage.getPart(3);
     byte[] isDurableByte = isDurablePart.getSerializedForm();
-    boolean isDurable = (isDurableByte == null || isDurableByte[0] == 0) ? false : true;
+    boolean isDurable = !(isDurableByte == null || isDurableByte[0] == 0);
     // region data policy
     Part regionDataPolicyPart = clientMessage.getPart(clientMessage.getNumberOfParts() - 1);
     byte[] regionDataPolicyPartBytes = regionDataPolicyPart.getSerializedForm();
@@ -98,7 +99,7 @@ public class ExecuteCQ61 extends BaseCQCommand {
             LocalizedStrings.ExecuteCQ_SERVER_NOTIFYBYSUBSCRIPTION_MODE_IS_SET_TO_FALSE_CQ_EXECUTION_IS_NOT_SUPPORTED_IN_THIS_MODE
                 .toLocalizedString();
         sendCqResponse(MessageType.CQDATAERROR_MSG_TYPE, err, clientMessage.getTransactionId(),
-            null, serverConnection, securityService);
+            null, serverConnection);
         return;
       }
     }
@@ -147,7 +148,7 @@ public class ExecuteCQ61 extends BaseCQCommand {
           isDurable, true, regionDataPolicyPartBytes[0], null);
     } catch (CqException cqe) {
       sendCqResponse(MessageType.CQ_EXCEPTION_TYPE, "", clientMessage.getTransactionId(), cqe,
-          serverConnection, securityService);
+          serverConnection);
       serverConnection.removeCq(cqName, isDurable);
       return;
     } catch (Exception e) {
@@ -156,9 +157,7 @@ public class ExecuteCQ61 extends BaseCQCommand {
       return;
     }
 
-    long oldstart = start;
     boolean sendResults = false;
-    boolean successQuery = false;
 
     if (clientMessage.getMessageType() == MessageType.EXECUTECQ_WITH_IR_MSG_TYPE) {
       sendResults = true;
@@ -166,8 +165,9 @@ public class ExecuteCQ61 extends BaseCQCommand {
 
     // Execute the query only if it is execute with initial results or
     // if it is a non PR query with execute query and maintain keys flags set
-    if (sendResults || (CqServiceImpl.EXECUTE_QUERY_DURING_INIT && CqServiceProvider.MAINTAIN_KEYS
-        && !cqQuery.isPR())) {
+    boolean successQuery = false;
+    if (sendResults || CqServiceImpl.EXECUTE_QUERY_DURING_INIT && CqServiceProvider.MAINTAIN_KEYS
+        && !cqQuery.isPR()) {
       // Execute the query and send the result-set to client.
       try {
         if (query == null) {
@@ -180,8 +180,8 @@ public class ExecuteCQ61 extends BaseCQCommand {
 
 
         // Update the CQ statistics.
-        cqQuery.getVsdStats().setCqInitialResultsTime((DistributionStats.getStatTime()) - oldstart);
-        stats.incProcessExecuteCqWithIRTime((DistributionStats.getStatTime()) - oldstart);
+        cqQuery.getVsdStats().setCqInitialResultsTime(DistributionStats.getStatTime() - start);
+        stats.incProcessExecuteCqWithIRTime(DistributionStats.getStatTime() - start);
         // logger.fine("Time spent in execute with initial results :" +
         // DistributionStats.getStatTime() + ", " + oldstart);
       } finally { // To handle any exception.
@@ -189,7 +189,7 @@ public class ExecuteCQ61 extends BaseCQCommand {
         if (!successQuery) {
           try {
             cqServiceForExec.closeCq(cqName, id);
-          } catch (Exception ex) {
+          } catch (Exception ignored) {
             // Ignore.
           }
         }
@@ -205,10 +205,10 @@ public class ExecuteCQ61 extends BaseCQCommand {
       // Send OK to client
       sendCqResponse(MessageType.REPLY,
           LocalizedStrings.ExecuteCQ_CQ_CREATED_SUCCESSFULLY.toLocalizedString(),
-          clientMessage.getTransactionId(), null, serverConnection, securityService);
+          clientMessage.getTransactionId(), null, serverConnection);
 
       long start2 = DistributionStats.getStatTime();
-      stats.incProcessCreateCqTime(start2 - oldstart);
+      stats.incProcessCreateCqTime(start2 - start);
     }
     serverConnection.setAsTrue(RESPONDED);
   }
