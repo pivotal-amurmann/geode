@@ -23,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import org.apache.geode.security.PostProcessor;
 import org.apache.geode.security.SecurityManager;
 import org.apache.geode.test.junit.categories.IntegrationTest;
+import org.apache.geode.test.junit.categories.SecurityTest;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.util.ThreadContext;
 import org.junit.After;
@@ -34,7 +35,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.util.Properties;
 
-@Category(IntegrationTest.class)
+@Category({IntegrationTest.class, SecurityTest.class})
 public class SecurityServiceFactoryShiroIntegrationTest {
 
   private static final String SHIRO_INI_FILE = "SecurityServiceFactoryShiroIntegrationTest.ini";

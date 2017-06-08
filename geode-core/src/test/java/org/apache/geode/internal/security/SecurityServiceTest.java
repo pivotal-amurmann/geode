@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 import org.apache.geode.distributed.internal.DistributionConfig;
 import org.apache.geode.security.TestSecurityManager;
+import org.apache.geode.test.junit.categories.SecurityTest;
 import org.apache.geode.test.junit.categories.UnitTest;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.DefaultSecurityManager;
@@ -34,7 +35,7 @@ import org.junit.experimental.categories.Category;
 
 import java.util.Properties;
 
-@Category(UnitTest.class)
+@Category({UnitTest.class, SecurityTest.class})
 public class SecurityServiceTest {
 
   private Properties properties;

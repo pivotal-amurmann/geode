@@ -24,6 +24,7 @@ import static org.mockito.Mockito.mock;
 
 import org.apache.geode.security.PostProcessor;
 import org.apache.geode.security.SecurityManager;
+import org.apache.geode.test.junit.categories.SecurityTest;
 import org.apache.geode.test.junit.categories.UnitTest;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.util.ThreadContext;
@@ -33,7 +34,7 @@ import org.junit.experimental.categories.Category;
 
 import java.util.Properties;
 
-@Category(UnitTest.class)
+@Category({UnitTest.class, SecurityTest.class})
 public class SecurityServiceFactoryTest {
 
   @After
