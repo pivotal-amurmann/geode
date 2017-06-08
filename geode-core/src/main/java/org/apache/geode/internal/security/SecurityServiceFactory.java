@@ -25,7 +25,8 @@ import org.apache.geode.distributed.internal.DistributionConfig;
 import org.apache.geode.internal.cache.CacheConfig;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.internal.cache.InternalCache;
-import org.apache.geode.internal.security.shiro.ConfigInitialization;
+import org.apache.geode.internal.security.shiro.ConfigInitializer;
+import org.apache.geode.internal.security.shiro.RealmInitializer;
 import org.apache.geode.security.PostProcessor;
 import org.apache.geode.security.SecurityManager;
 import org.apache.shiro.SecurityUtils;
@@ -76,12 +77,11 @@ public class SecurityServiceFactory {
       case CUSTOM:
         String shiroConfig = getProperty(securityConfig, SECURITY_SHIRO_INIT);
         if (isNotBlank(shiroConfig)) {
-          ConfigInitialization configInitialization = new ConfigInitialization(shiroConfig);
-          configInitialization.initialize();
+          new ConfigInitializer().initialize(shiroConfig);
         }
         return new CustomSecurityService(postProcessor);
       case ENABLED:
-        return new EnabledSecurityService(securityManager, postProcessor);
+        return new EnabledSecurityService(securityManager, postProcessor, new RealmInitializer());
       case LEGACY:
         String clientAuthenticator = getProperty(securityConfig, SECURITY_CLIENT_AUTHENTICATOR);
         String peerAuthenticator = getProperty(securityConfig, SECURITY_PEER_AUTHENTICATOR);

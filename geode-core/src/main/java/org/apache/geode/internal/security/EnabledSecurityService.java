@@ -14,32 +14,13 @@
  */
 package org.apache.geode.internal.security;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.security.AccessController;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 import org.apache.commons.lang.SerializationException;
 import org.apache.commons.lang.StringUtils;
-import org.apache.logging.log4j.Logger;
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.ShiroException;
-import org.apache.shiro.mgt.DefaultSecurityManager;
-import org.apache.shiro.realm.Realm;
-import org.apache.shiro.session.mgt.DefaultSessionManager;
-import org.apache.shiro.session.mgt.SessionManager;
-import org.apache.shiro.subject.Subject;
-import org.apache.shiro.subject.support.SubjectThreadState;
-import org.apache.shiro.util.ThreadContext;
-import org.apache.shiro.util.ThreadState;
-
 import org.apache.geode.GemFireIOException;
 import org.apache.geode.internal.cache.EntryEventImpl;
 import org.apache.geode.internal.logging.LogService;
-import org.apache.geode.internal.security.shiro.CustomAuthRealm;
 import org.apache.geode.internal.security.shiro.GeodeAuthenticationToken;
+import org.apache.geode.internal.security.shiro.RealmInitializer;
 import org.apache.geode.internal.security.shiro.ShiroPrincipal;
 import org.apache.geode.internal.util.BlobHelper;
 import org.apache.geode.management.internal.security.ResourceOperation;
@@ -51,6 +32,20 @@ import org.apache.geode.security.ResourcePermission;
 import org.apache.geode.security.ResourcePermission.Operation;
 import org.apache.geode.security.ResourcePermission.Resource;
 import org.apache.geode.security.SecurityManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.ShiroException;
+import org.apache.shiro.subject.Subject;
+import org.apache.shiro.subject.support.SubjectThreadState;
+import org.apache.shiro.util.ThreadContext;
+import org.apache.shiro.util.ThreadState;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.security.AccessController;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Security service with SecurityManager and an optional PostProcessor.
@@ -62,15 +57,10 @@ public class EnabledSecurityService implements SecurityService {
 
   private final PostProcessor postProcessor;
 
-  EnabledSecurityService(final SecurityManager securityManager, final PostProcessor postProcessor) {
+  EnabledSecurityService(final SecurityManager securityManager, final PostProcessor postProcessor, final RealmInitializer realmInitializer) {
     this.securityManager = securityManager;
     this.postProcessor = postProcessor;
-
-    // initialize Shiro
-    Realm realm = new CustomAuthRealm(securityManager);
-    DefaultSecurityManager shiroManager = new DefaultSecurityManager(realm);
-    SecurityUtils.setSecurityManager(shiroManager);
-    increaseShiroGlobalSessionTimeout(shiroManager);
+    realmInitializer.initialize(this.securityManager);
   }
 
   @Override
@@ -392,20 +382,5 @@ public class EnabledSecurityService implements SecurityService {
   @Override
   public boolean isPeerSecurityRequired() {
     return true;
-  }
-
-  private void increaseShiroGlobalSessionTimeout(final DefaultSecurityManager shiroManager) {
-    SessionManager sessionManager = shiroManager.getSessionManager();
-    if (DefaultSessionManager.class.isInstance(sessionManager)) {
-      DefaultSessionManager defaultSessionManager = (DefaultSessionManager) sessionManager;
-      defaultSessionManager.setGlobalSessionTimeout(Long.MAX_VALUE);
-      long value = defaultSessionManager.getGlobalSessionTimeout();
-      if (value != Long.MAX_VALUE) {
-        logger.error("Unable to set Shiro Global Session Timeout. Current value is '{}'.", value);
-      }
-    } else {
-      logger.error("Unable to set Shiro Global Session Timeout. Current SessionManager is '{}'.",
-          sessionManager == null ? "null" : sessionManager.getClass());
-    }
   }
 }

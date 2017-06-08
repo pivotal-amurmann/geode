@@ -66,8 +66,8 @@ public class JMXShiroAuthenticator implements JMXAuthenticator, NotificationList
       principal = new ShiroPrincipal(shiroSubject);
     }
 
-    return new Subject(true, Collections.singleton(principal), Collections.EMPTY_SET,
-        Collections.EMPTY_SET);
+    return new Subject(true, Collections.singleton(principal), Collections.emptySet(),
+        Collections.emptySet());
   }
 
   @Override
