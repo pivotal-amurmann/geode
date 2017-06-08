@@ -67,7 +67,8 @@ public class WaitUntilParallelGatewaySenderFlushedCoordinatorJUnitTest
     long timeout = 5000;
     TimeUnit unit = TimeUnit.MILLISECONDS;
     WaitUntilParallelGatewaySenderFlushedCoordinator coordinator =
-        new WaitUntilParallelGatewaySenderFlushedCoordinator(this.sender, timeout, unit, false);
+        new WaitUntilParallelGatewaySenderFlushedCoordinator(this.sender, new HashSet<Integer>(),
+            timeout, unit, false);
     WaitUntilParallelGatewaySenderFlushedCoordinator coordinatorSpy = spy(coordinator);
     doReturn(getLocalBucketRegions()).when(coordinatorSpy).getLocalBucketRegions(any());
     doReturn(getCallableResult(true)).when(coordinatorSpy)
@@ -81,7 +82,8 @@ public class WaitUntilParallelGatewaySenderFlushedCoordinatorJUnitTest
     long timeout = 500;
     TimeUnit unit = TimeUnit.MILLISECONDS;
     WaitUntilParallelGatewaySenderFlushedCoordinator coordinator =
-        new WaitUntilParallelGatewaySenderFlushedCoordinator(this.sender, timeout, unit, false);
+        new WaitUntilParallelGatewaySenderFlushedCoordinator(this.sender, new HashSet<Integer>(),
+            timeout, unit, false);
     WaitUntilParallelGatewaySenderFlushedCoordinator coordinatorSpy = spy(coordinator);
 
     Set<BucketRegion> bucketRegions = new HashSet<>();
@@ -109,7 +111,8 @@ public class WaitUntilParallelGatewaySenderFlushedCoordinatorJUnitTest
     long timeout = 5000;
     TimeUnit unit = TimeUnit.MILLISECONDS;
     WaitUntilParallelGatewaySenderFlushedCoordinator coordinator =
-        new WaitUntilParallelGatewaySenderFlushedCoordinator(this.sender, timeout, unit, false);
+        new WaitUntilParallelGatewaySenderFlushedCoordinator(this.sender, new HashSet<Integer>(),
+            timeout, unit, false);
     WaitUntilParallelGatewaySenderFlushedCoordinator coordinatorSpy = spy(coordinator);
     doReturn(getLocalBucketRegions()).when(coordinatorSpy).getLocalBucketRegions(any());
     doReturn(getCallableResult(false)).when(coordinatorSpy)
@@ -123,7 +126,8 @@ public class WaitUntilParallelGatewaySenderFlushedCoordinatorJUnitTest
     long timeout = 5000;
     TimeUnit unit = TimeUnit.MILLISECONDS;
     WaitUntilParallelGatewaySenderFlushedCoordinator coordinator =
-        new WaitUntilParallelGatewaySenderFlushedCoordinator(this.sender, timeout, unit, true);
+        new WaitUntilParallelGatewaySenderFlushedCoordinator(this.sender, new HashSet<Integer>(),
+            timeout, unit, true);
     WaitUntilParallelGatewaySenderFlushedCoordinator coordinatorSpy = spy(coordinator);
     doReturn(getLocalBucketRegions()).when(coordinatorSpy).getLocalBucketRegions(any());
     doReturn(getCallableResult(true)).when(coordinatorSpy)
@@ -137,7 +141,8 @@ public class WaitUntilParallelGatewaySenderFlushedCoordinatorJUnitTest
     long timeout = 5000;
     TimeUnit unit = TimeUnit.MILLISECONDS;
     WaitUntilParallelGatewaySenderFlushedCoordinator coordinator =
-        new WaitUntilParallelGatewaySenderFlushedCoordinator(this.sender, timeout, unit, true);
+        new WaitUntilParallelGatewaySenderFlushedCoordinator(this.sender, new HashSet<Integer>(),
+            timeout, unit, true);
     WaitUntilParallelGatewaySenderFlushedCoordinator coordinatorSpy = spy(coordinator);
     doReturn(getLocalBucketRegions()).when(coordinatorSpy).getLocalBucketRegions(any());
     doReturn(getCallableResult(false)).when(coordinatorSpy)

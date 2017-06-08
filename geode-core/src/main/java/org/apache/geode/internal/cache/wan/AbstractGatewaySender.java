@@ -1254,12 +1254,14 @@ public abstract class AbstractGatewaySender implements GatewaySender, Distributi
     return lifeCycleLock;
   }
 
-  public boolean waitUntilFlushed(long timeout, TimeUnit unit) throws InterruptedException {
+  public boolean waitUntilFlushed(Set<Integer> bucketIds, long timeout, TimeUnit unit)
+      throws InterruptedException {
     boolean result = false;
     if (isParallel()) {
       try {
         WaitUntilParallelGatewaySenderFlushedCoordinator coordinator =
-            new WaitUntilParallelGatewaySenderFlushedCoordinator(this, timeout, unit, true);
+            new WaitUntilParallelGatewaySenderFlushedCoordinator(this, bucketIds, timeout, unit,
+                true);
         result = coordinator.waitUntilFlushed();
       } catch (BucketMovedException | CancelException | RegionDestroyedException e) {
         logger.warn(

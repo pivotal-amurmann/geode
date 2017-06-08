@@ -19,6 +19,7 @@ import org.apache.geode.distributed.internal.*;
 import org.apache.geode.distributed.internal.membership.InternalDistributedMember;
 import org.apache.geode.internal.cache.*;
 import org.apache.geode.internal.cache.wan.AbstractGatewaySender;
+import org.apache.geode.internal.cache.wan.GatewaySenderEventImpl;
 import org.apache.geode.internal.cache.wan.WaitUntilGatewaySenderFlushedCoordinator;
 
 import java.util.ArrayList;
@@ -33,9 +34,12 @@ public class WaitUntilParallelGatewaySenderFlushedCoordinator
     extends WaitUntilGatewaySenderFlushedCoordinator {
   final static private int CALLABLES_CHUNK_SIZE = 10;
 
+  protected Set<Integer> bucketIds;
+
   public WaitUntilParallelGatewaySenderFlushedCoordinator(AbstractGatewaySender sender,
-      long timeout, TimeUnit unit, boolean initiator) {
+      Set<Integer> bucketIds, long timeout, TimeUnit unit, boolean initiator) {
     super(sender, timeout, unit, initiator);
+    this.bucketIds = bucketIds;
   }
 
   public boolean waitUntilFlushed() throws Throwable {
@@ -53,6 +57,16 @@ public class WaitUntilParallelGatewaySenderFlushedCoordinator
     int callableCount = 0;
     long nanosRemaining = unit.toNanos(timeout);
     long endTime = System.nanoTime() + nanosRemaining;
+    for (int bucketId : bucketIds) {
+      BlockingQueue<GatewaySenderEventImpl> tempQueue = prq.getBucketTmpQueue(bucketId);
+      while (tempQueue != null && !tempQueue.isEmpty()) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("WaitUntilParallelGatewaySenderFlushedCoordinator wait for tempQeue "
+              + bucketId + " to be empty");
+        }
+        Thread.sleep(20);
+      }
+    }
     Set<BucketRegion> localBucketRegions = getLocalBucketRegions(pr);
     for (BucketRegion br : localBucketRegions) {
       // timeout exceeded, do not submit more callables, return localResult false

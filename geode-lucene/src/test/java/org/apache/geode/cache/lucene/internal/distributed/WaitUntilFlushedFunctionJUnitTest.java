@@ -20,6 +20,8 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.geode.cache.Region;
@@ -66,7 +68,8 @@ public class WaitUntilFlushedFunctionJUnitTest {
     when(mockContext.getArguments()).thenReturn(waitArgs);
     when(mockContext.getResultSender()).thenReturn(mockResultSender);
     when(mockCache.getAsyncEventQueue(any())).thenReturn(mockAEQ);
-    when(mockAEQ.waitUntilFlushed(10000, TimeUnit.MILLISECONDS)).thenReturn(true);
+    when(mockAEQ.waitUntilFlushed(new HashSet<Integer>(), 10000, TimeUnit.MILLISECONDS))
+        .thenReturn(true);
 
     WaitUntilFlushedFunction function = new WaitUntilFlushedFunction();
     function.execute(mockContext);

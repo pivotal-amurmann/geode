@@ -18,6 +18,8 @@ package org.apache.geode.cache.lucene.internal.distributed;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.geode.cache.Cache;
@@ -44,6 +46,7 @@ import org.apache.geode.cache.lucene.internal.repository.IndexResultCollector;
 import org.apache.geode.cache.lucene.internal.repository.RepositoryManager;
 import org.apache.geode.internal.InternalEntity;
 import org.apache.geode.internal.cache.BucketNotFoundException;
+import org.apache.geode.internal.cache.PartitionedRegion;
 import org.apache.geode.internal.logging.LogService;
 
 /**
@@ -80,7 +83,14 @@ public class WaitUntilFlushedFunction implements Function, InternalEntity {
     AsyncEventQueueImpl queue = (AsyncEventQueueImpl) cache.getAsyncEventQueue(aeqId);
     if (queue != null) {
       try {
-        result = queue.waitUntilFlushed(timeout, unit);
+        Set<Integer> bucketIds;
+        if (region instanceof PartitionedRegion) {
+          PartitionedRegion pr = (PartitionedRegion) region;
+          bucketIds = pr.getDataStore().getAllLocalBucketIds();
+        } else {
+          bucketIds = new HashSet<Integer>();
+        }
+        result = queue.waitUntilFlushed(bucketIds, timeout, unit);
       } catch (InterruptedException e) {
       }
 

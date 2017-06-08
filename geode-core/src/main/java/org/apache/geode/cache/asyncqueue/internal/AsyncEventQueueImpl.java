@@ -217,7 +217,8 @@ public class AsyncEventQueueImpl implements AsyncEventQueue {
     return ((AbstractGatewaySender) this.sender).isForwardExpirationDestroy();
   }
 
-  public boolean waitUntilFlushed(long timeout, TimeUnit unit) throws InterruptedException {
-    return ((AbstractGatewaySender) this.sender).waitUntilFlushed(timeout, unit);
+  public boolean waitUntilFlushed(Set<Integer> bucketIds, long timeout, TimeUnit unit)
+      throws InterruptedException {
+    return ((AbstractGatewaySender) this.sender).waitUntilFlushed(bucketIds, timeout, unit);
   }
 }
