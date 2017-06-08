@@ -48,6 +48,8 @@ import org.apache.geode.internal.cache.tier.ConnectionProxy;
 import org.apache.geode.internal.i18n.LocalizedStrings;
 import org.apache.geode.internal.logging.InternalLogWriter;
 import org.apache.geode.internal.logging.LogService;
+import org.apache.geode.internal.security.CallbackInstantiator;
+import org.apache.geode.internal.security.Credentials;
 import org.apache.geode.internal.security.SecurityService;
 import org.apache.geode.internal.security.SecurityServiceFactory;
 import org.apache.geode.pdx.internal.PeerTypeRegistration;
@@ -1508,12 +1510,13 @@ public class HandShake implements ClientHandShake {
     Properties credentials = null;
     // if no authInit, Try to extract the credentials directly from securityProps
     if (StringUtils.isBlank(authInitMethod)) {
-      return SecurityService.getCredentials(securityProperties);
+      return Credentials.getCredentials(securityProperties);
     }
 
     // if authInit exists
     try {
-      AuthInitialize auth = SecurityService.getObjectOfType(authInitMethod, AuthInitialize.class);
+      AuthInitialize auth =
+          CallbackInstantiator.getObjectOfType(authInitMethod, AuthInitialize.class);
       auth.init(logWriter, securityLogWriter);
       try {
         credentials = auth.getCredentials(securityProperties, server, isPeer);

@@ -41,16 +41,6 @@ public class DisabledSecurityService implements SecurityService {
   }
 
   @Override
-  public void setSecurityManager(final SecurityManager securityManager) {
-    // nothing
-  }
-
-  @Override
-  public void setPostProcessor(final PostProcessor postProcessor) {
-    // nothing
-  }
-
-  @Override
   public ThreadState bindSubject(final Subject subject) {
     if (subject == null) {
       return null;

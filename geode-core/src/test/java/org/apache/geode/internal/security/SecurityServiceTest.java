@@ -18,15 +18,11 @@ import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_CLIE
 import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_MANAGER;
 import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_PEER_AUTHENTICATOR;
 import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_SHIRO_INIT;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.apache.geode.distributed.internal.DistributionConfig;
-import org.apache.geode.security.GemFireSecurityException;
 import org.apache.geode.security.TestSecurityManager;
 import org.apache.geode.test.junit.categories.UnitTest;
 import org.apache.shiro.SecurityUtils;
@@ -60,55 +56,11 @@ public class SecurityServiceTest {
   }
 
   @Test
-  public void testGetObjectFromConstructor() {
-    String string = SecurityService.getObjectOfType(String.class.getName(), String.class);
-    assertNotNull(string);
-
-    CharSequence charSequence =
-        SecurityService.getObjectOfType(String.class.getName(), CharSequence.class);
-    assertNotNull(charSequence);
-
-    assertThatThrownBy(() -> SecurityService.getObjectOfType("com.abc.testString", String.class))
-        .isInstanceOf(GemFireSecurityException.class);
-
-    assertThatThrownBy(() -> SecurityService.getObjectOfType(String.class.getName(), Boolean.class))
-        .isInstanceOf(GemFireSecurityException.class);
-
-    assertThatThrownBy(() -> SecurityService.getObjectOfType("", String.class))
-        .isInstanceOf(GemFireSecurityException.class);
-
-    assertThatThrownBy(() -> SecurityService.getObjectOfType(null, String.class))
-        .isInstanceOf(GemFireSecurityException.class);
-
-    assertThatThrownBy(() -> SecurityService.getObjectOfType("  ", String.class))
-        .isInstanceOf(GemFireSecurityException.class);
-  }
-
-  @Test
-  public void testGetObjectFromFactoryMethod() {
-    String string =
-        SecurityService.getObjectOfType(Factories.class.getName() + ".getString", String.class);
-    assertNotNull(string);
-
-    CharSequence charSequence =
-        SecurityService.getObjectOfType(Factories.class.getName() + ".getString", String.class);
-    assertNotNull(charSequence);
-
-    assertThatThrownBy(() -> SecurityService
-        .getObjectOfType(Factories.class.getName() + ".getStringNonStatic", String.class))
-            .isInstanceOf(GemFireSecurityException.class);
-
-    assertThatThrownBy(() -> SecurityService
-        .getObjectOfType(Factories.class.getName() + ".getNullString", String.class))
-            .isInstanceOf(GemFireSecurityException.class);
-  }
-
-  @Test
   public void testInitialSecurityFlags() {
     // initial state of SecurityService
-    assertFalse(this.securityService.isIntegratedSecurity());
-    assertFalse(this.securityService.isClientSecurityRequired());
-    assertFalse(this.securityService.isPeerSecurityRequired());
+    assertThat(this.securityService.isIntegratedSecurity()).isFalse();
+    assertThat(this.securityService.isClientSecurityRequired()).isFalse();
+    assertThat(this.securityService.isPeerSecurityRequired()).isFalse();
   }
 
   @Test
@@ -119,9 +71,9 @@ public class SecurityServiceTest {
 
     this.securityService = SecurityServiceFactory.create(null, this.distributionConfig);
 
-    assertTrue(this.securityService.isIntegratedSecurity());
-    assertTrue(this.securityService.isClientSecurityRequired());
-    assertTrue(this.securityService.isPeerSecurityRequired());
+    assertThat(this.securityService.isIntegratedSecurity()).isTrue();
+    assertThat(this.securityService.isClientSecurityRequired()).isTrue();
+    assertThat(this.securityService.isPeerSecurityRequired()).isTrue();
   }
 
   @Test
@@ -129,9 +81,9 @@ public class SecurityServiceTest {
     this.properties.setProperty(SECURITY_CLIENT_AUTHENTICATOR, "org.abc.test");
     this.securityService = SecurityServiceFactory.create(null, this.distributionConfig);
 
-    assertFalse(this.securityService.isIntegratedSecurity());
-    assertTrue(this.securityService.isClientSecurityRequired());
-    assertFalse(this.securityService.isPeerSecurityRequired());
+    assertThat(this.securityService.isIntegratedSecurity()).isFalse();
+    assertThat(this.securityService.isClientSecurityRequired()).isTrue();
+    assertThat(this.securityService.isPeerSecurityRequired()).isFalse();
   }
 
   @Test
@@ -139,9 +91,9 @@ public class SecurityServiceTest {
     this.properties.setProperty(SECURITY_PEER_AUTHENTICATOR, "org.abc.test");
     this.securityService = SecurityServiceFactory.create(null, this.distributionConfig);
 
-    assertFalse(this.securityService.isIntegratedSecurity());
-    assertFalse(this.securityService.isClientSecurityRequired());
-    assertTrue(this.securityService.isPeerSecurityRequired());
+    assertThat(this.securityService.isIntegratedSecurity()).isFalse();
+    assertThat(this.securityService.isClientSecurityRequired()).isFalse();
+    assertThat(this.securityService.isPeerSecurityRequired()).isTrue();
   }
 
   @Test
@@ -151,9 +103,9 @@ public class SecurityServiceTest {
 
     this.securityService = SecurityServiceFactory.create(null, this.distributionConfig);
 
-    assertFalse(this.securityService.isIntegratedSecurity());
-    assertTrue(this.securityService.isClientSecurityRequired());
-    assertTrue(this.securityService.isPeerSecurityRequired());
+    assertThat(this.securityService.isIntegratedSecurity()).isFalse();
+    assertThat(this.securityService.isClientSecurityRequired()).isTrue();
+    assertThat(this.securityService.isPeerSecurityRequired()).isTrue();
   }
 
   @Test
@@ -162,14 +114,14 @@ public class SecurityServiceTest {
 
     this.securityService = SecurityServiceFactory.create(null, this.distributionConfig);
 
-    assertTrue(this.securityService.isIntegratedSecurity());
-    assertTrue(this.securityService.isClientSecurityRequired());
-    assertTrue(this.securityService.isPeerSecurityRequired());
+    assertThat(this.securityService.isIntegratedSecurity()).isTrue();
+    assertThat(this.securityService.isClientSecurityRequired()).isTrue();
+    assertThat(this.securityService.isPeerSecurityRequired()).isTrue();
   }
 
   @Test
   public void testNoInit() {
-    assertFalse(this.securityService.isIntegratedSecurity());
+    assertThat(this.securityService.isIntegratedSecurity()).isFalse();
   }
 
   @Test
@@ -177,51 +129,7 @@ public class SecurityServiceTest {
     SecurityUtils.setSecurityManager(new DefaultSecurityManager());
     this.securityService = SecurityServiceFactory.create(null, this.distributionConfig);
 
-    assertTrue(this.securityService.isIntegratedSecurity());
+    assertThat(this.securityService.isIntegratedSecurity()).isTrue();
   }
 
-  // @Test
-  // public void testSetSecurityManager() {
-  // // initially
-  // assertFalse(this.securityService.isIntegratedSecurity());
-  //
-  // // init with client authenticator
-  // this.properties.setProperty(SECURITY_CLIENT_AUTHENTICATOR, "org.abc.test");
-  // this.securityService = SecurityServiceFactory.create(null, this.distributionConfig);
-  //
-  // assertFalse(this.securityService.isIntegratedSecurity());
-  // assertTrue(this.securityService.isClientSecurityRequired());
-  // assertFalse(this.securityService.isPeerSecurityRequired());
-  //
-  // // set a security manager
-  // this.securityService.setSecurityManager(new SimpleTestSecurityManager());
-  // assertTrue(this.securityService.isIntegratedSecurity());
-  // assertTrue(this.securityService.isClientSecurityRequired());
-  // assertTrue(this.securityService.isPeerSecurityRequired());
-  // assertFalse(this.securityService.needPostProcess());
-  //
-  // // set a post processor
-  // this.securityService.setPostProcessor(new TestPostProcessor());
-  // assertTrue(this.securityService.isIntegratedSecurity());
-  // assertTrue(this.securityService.needPostProcess());
-  // }
-
-  private static class Factories {
-
-    public static String getString() {
-      return new String();
-    }
-
-    public static String getNullString() {
-      return null;
-    }
-
-    public String getStringNonStatic() {
-      return new String();
-    }
-
-    public static Boolean getBoolean() {
-      return Boolean.TRUE;
-    }
-  }
 }

@@ -14,13 +14,13 @@
  */
 package org.apache.geode.internal.security;
 
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_CLIENT_AUTHENTICATOR;
 import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_MANAGER;
 import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_PEER_AUTHENTICATOR;
 import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_POST_PROCESSOR;
 import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_SHIRO_INIT;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.geode.distributed.internal.DistributionConfig;
 import org.apache.geode.internal.cache.CacheConfig;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
@@ -75,7 +75,7 @@ public class SecurityServiceFactory {
     switch (type) {
       case CUSTOM:
         String shiroConfig = getProperty(securityConfig, SECURITY_SHIRO_INIT);
-        if (StringUtils.isNotBlank(shiroConfig)) {
+        if (isNotBlank(shiroConfig)) {
           ConfigInitialization configInitialization = new ConfigInitialization(shiroConfig);
           configInitialization.initialize();
         }
@@ -133,8 +133,8 @@ public class SecurityServiceFactory {
     }
 
     String securityManagerConfig = getProperty(securityConfig, SECURITY_MANAGER);
-    if (StringUtils.isNotBlank(securityManagerConfig)) {
-      securityManager = SecurityService.getObjectOfTypeFromClassName(securityManagerConfig,
+    if (isNotBlank(securityManagerConfig)) {
+      securityManager = CallbackInstantiator.getObjectOfTypeFromClassName(securityManagerConfig,
           SecurityManager.class);
     }
 
@@ -147,9 +147,9 @@ public class SecurityServiceFactory {
     }
 
     String postProcessorConfig = getProperty(securityConfig, SECURITY_POST_PROCESSOR);
-    if (StringUtils.isNotBlank(postProcessorConfig)) {
-      postProcessor =
-          SecurityService.getObjectOfTypeFromClassName(postProcessorConfig, PostProcessor.class);
+    if (isNotBlank(postProcessorConfig)) {
+      postProcessor = CallbackInstantiator.getObjectOfTypeFromClassName(postProcessorConfig,
+          PostProcessor.class);
     }
 
     return postProcessor;

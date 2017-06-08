@@ -14,14 +14,9 @@
  */
 package org.apache.geode.internal.security;
 
-import static org.apache.geode.distributed.ConfigurationProperties.*;
-
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.config.Ini.Section;
-import org.apache.shiro.config.IniSecurityManagerFactory;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadState;
 
@@ -46,16 +41,6 @@ public class LegacySecurityService implements SecurityService {
 
   @Override
   public void initSecurity(final Properties securityProps) {
-    // nothing
-  }
-
-  @Override
-  public void setSecurityManager(final SecurityManager securityManager) {
-    // nothing
-  }
-
-  @Override
-  public void setPostProcessor(final PostProcessor postProcessor) {
     // nothing
   }
 

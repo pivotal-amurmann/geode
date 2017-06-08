@@ -31,6 +31,7 @@ import org.apache.geode.distributed.internal.membership.gms.interfaces.Authentic
 import org.apache.geode.internal.cache.tier.sockets.HandShake;
 import org.apache.geode.internal.i18n.LocalizedStrings;
 import org.apache.geode.internal.logging.InternalLogWriter;
+import org.apache.geode.internal.security.CallbackInstantiator;
 import org.apache.geode.internal.security.SecurityService;
 import org.apache.geode.security.AuthenticationFailedException;
 import org.apache.geode.security.GemFireSecurityException;
@@ -142,7 +143,7 @@ public class GMSAuthenticator implements Authenticator {
     String authMethod = securityProps.getProperty(SECURITY_PEER_AUTHENTICATOR);
     org.apache.geode.security.Authenticator auth = null;
     try {
-      auth = SecurityService.getObjectOfType(authMethod,
+      auth = CallbackInstantiator.getObjectOfType(authMethod,
           org.apache.geode.security.Authenticator.class);
 
       LogWriter logWriter = this.services.getLogWriter();

@@ -14,29 +14,19 @@
  */
 package org.apache.geode.internal.security;
 
-import org.apache.geode.internal.ClassLoadUtil;
-import org.apache.geode.management.internal.security.ResourceConstants;
 import org.apache.geode.management.internal.security.ResourceOperation;
-import org.apache.geode.security.GemFireSecurityException;
 import org.apache.geode.security.PostProcessor;
 import org.apache.geode.security.ResourcePermission;
 import org.apache.geode.security.SecurityManager;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadState;
 
-import java.lang.reflect.Method;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
 public interface SecurityService {
 
   void initSecurity(Properties securityProps);
-
-  // TODO: delete setSecurityManager
-  void setSecurityManager(SecurityManager securityManager);
-
-  // TODO: delete setPostProcessor
-  void setPostProcessor(PostProcessor postProcessor);
 
   ThreadState bindSubject(Subject subject);
 
@@ -46,7 +36,6 @@ public interface SecurityService {
 
   void logout();
 
-  // TODO: define Callable<type>
   Callable associateWith(Callable callable);
 
   void authorize(ResourceOperation resourceOperation);
@@ -101,81 +90,5 @@ public interface SecurityService {
   SecurityManager getSecurityManager();
 
   PostProcessor getPostProcessor();
-
-  /**
-   * this method would never return null, it either throws an exception or returns an object
-   */
-  static <T> T getObjectOfTypeFromClassName(String className, Class<T> expectedClazz) {
-    Class actualClass;
-    try {
-      actualClass = ClassLoadUtil.classFromName(className);
-    } catch (Exception e) {
-      throw new GemFireSecurityException("Instance could not be obtained, " + e, e);
-    }
-
-    if (!expectedClazz.isAssignableFrom(actualClass)) {
-      throw new GemFireSecurityException(
-          "Instance could not be obtained. Expecting a " + expectedClazz.getName() + " class.");
-    }
-
-    try {
-      return (T) actualClass.newInstance();
-    } catch (Exception e) {
-      throw new GemFireSecurityException(
-          "Instance could not be obtained. Error instantiating " + actualClass.getName(), e);
-    }
-  }
-
-  /**
-   * this method would never return null, it either throws an exception or returns an object
-   *
-   * TODO: expectedClazz is unused
-   */
-  static <T> T getObjectOfTypeFromFactoryMethod(String factoryMethodName, Class<T> expectedClazz) {
-    T actualObject;
-    try {
-      Method factoryMethod = ClassLoadUtil.methodFromName(factoryMethodName);
-      actualObject = (T) factoryMethod.invoke(null, (Object[]) null);
-    } catch (Exception e) {
-      throw new GemFireSecurityException("Instance could not be obtained from " + factoryMethodName,
-          e);
-    }
-
-    if (actualObject == null) {
-      throw new GemFireSecurityException(
-          "Instance could not be obtained from " + factoryMethodName);
-    }
-
-    return actualObject;
-  }
-
-  /**
-   * this method would never return null, it either throws an exception or returns an object
-   *
-   * @return an object of type expectedClazz. This method would never return null. It either returns
-   *         an non-null object or throws exception.
-   */
-  static <T> T getObjectOfType(String classOrMethod, Class<T> expectedClazz) {
-    T object;
-    try {
-      object = getObjectOfTypeFromClassName(classOrMethod, expectedClazz);
-    } catch (Exception ignore) {
-      object = getObjectOfTypeFromFactoryMethod(classOrMethod, expectedClazz);
-    }
-    return object;
-  }
-
-  static Properties getCredentials(Properties securityProps) {
-    Properties credentials = null;
-    if (securityProps.containsKey(ResourceConstants.USER_NAME)
-        && securityProps.containsKey(ResourceConstants.PASSWORD)) {
-      credentials = new Properties();
-      credentials.setProperty(ResourceConstants.USER_NAME,
-          securityProps.getProperty(ResourceConstants.USER_NAME));
-      credentials.setProperty(ResourceConstants.PASSWORD,
-          securityProps.getProperty(ResourceConstants.PASSWORD));
-    }
-    return credentials;
-  }
 
 }

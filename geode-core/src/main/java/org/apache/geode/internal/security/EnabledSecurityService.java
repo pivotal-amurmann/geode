@@ -81,16 +81,6 @@ public class EnabledSecurityService implements SecurityService {
     }
   }
 
-  @Override
-  public void setSecurityManager(final SecurityManager securityManager) {
-    // nothing
-  }
-
-  @Override
-  public void setPostProcessor(final PostProcessor postProcessor) {
-    // nothing
-  }
-
   /**
    * It first looks the shiro subject in AccessControlContext since JMX will use multiple threads to
    * process operations from the same client, then it looks into Shiro's thead context.
