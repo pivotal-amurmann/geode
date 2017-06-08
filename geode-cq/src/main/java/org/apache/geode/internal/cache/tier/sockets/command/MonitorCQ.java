@@ -73,7 +73,8 @@ public class MonitorCQ extends BaseCQCommand {
 
     if (logger.isDebugEnabled()) {
       logger.debug("{}: Received MonitorCq request from {} op: {}{}", serverConnection.getName(),
-          serverConnection.getSocketString(), op, regionName != null ? " RegionName: " + regionName : "");
+          serverConnection.getSocketString(), op,
+          regionName != null ? " RegionName: " + regionName : "");
     }
 
     securityService.authorizeClusterRead();

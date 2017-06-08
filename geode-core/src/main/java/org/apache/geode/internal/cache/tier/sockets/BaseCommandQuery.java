@@ -298,7 +298,8 @@ public abstract class BaseCommandQuery extends BaseCommand {
     return false;
   }
 
-  protected void sendCqResponse(int msgType, String msgStr, int txId, Throwable e, ServerConnection servConn) throws IOException {
+  protected void sendCqResponse(int msgType, String msgStr, int txId, Throwable e,
+      ServerConnection servConn) throws IOException {
     ChunkedMessage cqMsg = servConn.getChunkedResponseMessage();
     if (logger.isDebugEnabled()) {
       logger.debug("CQ Response message :{}", msgStr);

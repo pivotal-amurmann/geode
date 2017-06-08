@@ -64,8 +64,7 @@ public class GetDurableCQs extends BaseCQCommand {
     }
 
     try {
-      DefaultQueryService
-          qService =
+      DefaultQueryService qService =
           (DefaultQueryService) crHelper.getCache().getLocalQueryService();
 
       securityService.authorizeClusterRead();
@@ -119,7 +118,9 @@ public class GetDurableCQs extends BaseCQCommand {
     chunkedResponseMsg.addObjPart(list, false);
 
     if (logger.isDebugEnabled()) {
-      logger.debug("{}: Sending {} durableCQs response chunk{}", servConn.getName(), lastChunk ? " last " : " ", logger.isTraceEnabled() ? " keys=" + list + " chunk=<" + chunkedResponseMsg + ">" : "");
+      logger.debug("{}: Sending {} durableCQs response chunk{}", servConn.getName(),
+          lastChunk ? " last " : " ",
+          logger.isTraceEnabled() ? " keys=" + list + " chunk=<" + chunkedResponseMsg + ">" : "");
     }
 
     chunkedResponseMsg.sendChunk(servConn);

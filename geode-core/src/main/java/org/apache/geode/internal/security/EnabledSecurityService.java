@@ -57,7 +57,8 @@ public class EnabledSecurityService implements SecurityService {
 
   private final PostProcessor postProcessor;
 
-  EnabledSecurityService(final SecurityManager securityManager, final PostProcessor postProcessor, final RealmInitializer realmInitializer) {
+  EnabledSecurityService(final SecurityManager securityManager, final PostProcessor postProcessor,
+      final RealmInitializer realmInitializer) {
     this.securityManager = securityManager;
     this.postProcessor = postProcessor;
     realmInitializer.initialize(this.securityManager);

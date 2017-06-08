@@ -26,8 +26,7 @@ public class ConfigInitializer {
   }
 
   public void initialize(String shiroConfig) {
-    IniSecurityManagerFactory factory =
-        new IniSecurityManagerFactory("classpath:" + shiroConfig);
+    IniSecurityManagerFactory factory = new IniSecurityManagerFactory("classpath:" + shiroConfig);
 
     // we will need to make sure that shiro uses a case sensitive permission resolver
     Section main = factory.getIni().addSection("main");
@@ -36,7 +35,7 @@ public class ConfigInitializer {
       main.put("iniRealm.permissionResolver", "$geodePermissionResolver");
     }
 
-    // logs "Users or Roles are already populated.  Configured Ini instance will be ignored."
+    // logs "Users or Roles are already populated. Configured Ini instance will be ignored."
     SecurityManager securityManager = factory.getInstance();
     SecurityUtils.setSecurityManager(securityManager);
   }
