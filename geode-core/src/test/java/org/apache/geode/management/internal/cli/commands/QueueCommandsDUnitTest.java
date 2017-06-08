@@ -53,9 +53,7 @@ import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.WaitCriterion;
 import org.apache.geode.test.junit.categories.DistributedTest;
 import org.apache.geode.test.junit.categories.FlakyTest;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.ProvideSystemProperty;
 import org.junit.experimental.categories.Category;
 
 import java.io.File;
@@ -80,10 +78,6 @@ public class QueueCommandsDUnitTest extends CliCommandTestBase {
   private static final long serialVersionUID = 1L;
 
   private final List<String> filesToBeDeleted = new CopyOnWriteArrayList<>();
-
-  @ClassRule
-  public static ProvideSystemProperty provideSystemProperty =
-      new ProvideSystemProperty(CliCommandTestBase.USE_HTTP_SYSTEM_PROPERTY, "true");
 
   @Override
   public final void preSetUp() throws Exception {
