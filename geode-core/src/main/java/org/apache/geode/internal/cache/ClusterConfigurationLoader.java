@@ -152,10 +152,12 @@ public class ClusterConfigurationLoader {
 
   /***
    * Apply the gemfire properties cluster configuration on this member
-   *  @param response {@link ConfigurationResponse} containing the requested {@link Configuration}
+   * 
+   * @param response {@link ConfigurationResponse} containing the requested {@link Configuration}
    * @param config this member's config
    */
-  public static void applyClusterPropertiesConfiguration(ConfigurationResponse response, DistributionConfig config) {
+  public static void applyClusterPropertiesConfiguration(ConfigurationResponse response,
+      DistributionConfig config) {
     if (response == null || response.getRequestedConfiguration().isEmpty()) {
       return;
     }

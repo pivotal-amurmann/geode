@@ -1198,7 +1198,7 @@ public class GemFireCacheImpl implements InternalCache, InternalClientCache, Has
         // Deploy all the jars from the deploy working dir.
         ClassPathLoader.getLatest().getJarDeployer().loadPreviouslyDeployedJarsFromDisk();
       }
-      ClusterConfigurationLoader.applyClusterXmlConfiguration(this,this. configurationResponse,
+      ClusterConfigurationLoader.applyClusterXmlConfiguration(this, this.configurationResponse,
           this.system.getConfig());
       initializeDeclarativeCache();
       completedCacheXml = true;
