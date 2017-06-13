@@ -324,7 +324,7 @@ public class GemFireCacheImpl implements InternalCache, InternalClientCache, Has
 
   private static final Pattern DOUBLE_BACKSLASH = Pattern.compile("\\\\");
 
-  private final ConfigurationResponse configurationResponse;
+  private volatile ConfigurationResponse configurationResponse;
 
   /** To test MAX_QUERY_EXECUTION_TIME option. */
   public int testMaxQueryExecutionTime = -1;
@@ -1211,6 +1211,7 @@ public class GemFireCacheImpl implements InternalCache, InternalClientCache, Has
           // I don't want init to throw an exception that came from the close.
           // I want it to throw the original exception that came from initializeDeclarativeCache.
         }
+        this.configurationResponse = null;
       }
     }
 
