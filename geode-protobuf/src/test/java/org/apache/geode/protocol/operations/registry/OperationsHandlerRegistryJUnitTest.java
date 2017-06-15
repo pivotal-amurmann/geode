@@ -15,47 +15,49 @@ import org.junit.experimental.categories.Category;
 
 @Category(UnitTest.class)
 public class OperationsHandlerRegistryJUnitTest {
+  public static final int DUMMY_OPERATION_CODE = 999;
   private OperationsHandlerRegistry operationsHandlerRegistry;
 
   @Before
-  public void setup() {
+  public void setup() throws OperationHandlerAlreadyRegisteredException {
     operationsHandlerRegistry = new OperationsHandlerRegistry();
   }
 
   @Test
   public void testAddOperationsHandlerForOperationType()
       throws OperationHandlerAlreadyRegisteredException {
-    operationsHandlerRegistry.registerOperationHandlerForOperationId(5,
+    int initialHandlerCount = operationsHandlerRegistry.getRegisteredOperationHandlersCount();
+    operationsHandlerRegistry.registerOperationHandlerForOperationId(DUMMY_OPERATION_CODE,
         new DummyOperationHandler());
-    assertEquals(1, operationsHandlerRegistry.getRegisteredOperationHandlersCount());
+    assertEquals(initialHandlerCount + 1, operationsHandlerRegistry.getRegisteredOperationHandlersCount());
   }
 
   @Test
   public void testAddingDuplicateOperationsHandlerForOperationType_ThrowsException()
       throws OperationHandlerAlreadyRegisteredException, OperationHandlerNotRegisteredException {
     DummyOperationHandler expectedOperationHandler = new DummyOperationHandler();
-    operationsHandlerRegistry.registerOperationHandlerForOperationId(5, expectedOperationHandler);
-    assertEquals(1, operationsHandlerRegistry.getRegisteredOperationHandlersCount());
+    operationsHandlerRegistry.registerOperationHandlerForOperationId(DUMMY_OPERATION_CODE, expectedOperationHandler);
+    int initialHandlerCount = operationsHandlerRegistry.getRegisteredOperationHandlersCount();
     boolean exceptionCaught = false;
     try {
-      operationsHandlerRegistry.registerOperationHandlerForOperationId(5,
+      operationsHandlerRegistry.registerOperationHandlerForOperationId(DUMMY_OPERATION_CODE,
           new DummyOperationHandler());
     } catch (OperationHandlerAlreadyRegisteredException e) {
       exceptionCaught = true;
     }
     assertTrue(exceptionCaught);
-    assertEquals(1, operationsHandlerRegistry.getRegisteredOperationHandlersCount());
+    assertEquals(initialHandlerCount, operationsHandlerRegistry.getRegisteredOperationHandlersCount());
     assertSame(expectedOperationHandler,
-        operationsHandlerRegistry.getOperationHandlerForOperationId(5));
+        operationsHandlerRegistry.getOperationHandlerForOperationId(DUMMY_OPERATION_CODE));
   }
 
   @Test
   public void testGetOperationsHandlerForOperationType()
       throws OperationHandlerAlreadyRegisteredException, OperationHandlerNotRegisteredException {
     DummyOperationHandler expectedOperationHandler = new DummyOperationHandler();
-    operationsHandlerRegistry.registerOperationHandlerForOperationId(5, expectedOperationHandler);
+    operationsHandlerRegistry.registerOperationHandlerForOperationId(DUMMY_OPERATION_CODE, expectedOperationHandler);
     OperationHandler operationHandler =
-        operationsHandlerRegistry.getOperationHandlerForOperationId(5);
+        operationsHandlerRegistry.getOperationHandlerForOperationId(DUMMY_OPERATION_CODE);
     assertSame(expectedOperationHandler, operationHandler);
   }
 
@@ -63,7 +65,7 @@ public class OperationsHandlerRegistryJUnitTest {
   public void testGetOperationsHandlerForMissingOperationType_ThrowsException() {
     boolean exceptionCaught = false;
     try {
-      operationsHandlerRegistry.getOperationHandlerForOperationId(5);
+      operationsHandlerRegistry.getOperationHandlerForOperationId(DUMMY_OPERATION_CODE);
     } catch (OperationHandlerNotRegisteredException e) {
       exceptionCaught = true;
     }
@@ -75,6 +77,11 @@ public class OperationsHandlerRegistryJUnitTest {
     @Override
     public Object process(SerializationService serializationService, Object request) {
       return null;
+    }
+
+    @Override
+    public int getOperationCode() {
+      return 0;
     }
   }
 

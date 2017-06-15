@@ -18,8 +18,8 @@ package org.apache.geode.client.protocol;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.apache.geode.protocol.OpsProcessor;
 import org.apache.geode.protocol.operations.OperationHandler;
-//import org.apache.geode.protocol.operations.ProtobufRequestOperationParser;
 import org.apache.geode.protocol.operations.ProtobufRequestOperationParser;
 import org.apache.geode.protocol.operations.registry.OperationsHandlerRegistry;
 import org.apache.geode.protocol.operations.registry.exception.OperationHandlerNotRegisteredException;
@@ -32,57 +32,24 @@ import org.junit.Test;
 
 public class OpsProcessorTest {
   @Test
-  public void testOpsProcessor() throws CodecNotRegisteredForTypeException {
-    OperationsHandlerRegistry opsHandlerRegistry = mock(OperationsHandlerRegistry.class);
+  public void testOpsProcessor() throws CodecNotRegisteredForTypeException, OperationHandlerNotRegisteredException {
+    OperationsHandlerRegistry opsHandlerRegistryStub = mock(OperationsHandlerRegistry.class);
     OperationHandler operationHandlerStub = mock(OperationHandler.class);
-    SerializationService serializationService = mock(SerializationService.class);
-
-//    when(serializationService.encode(BasicTypes.EncodingType.STRING,"10"))
-//        .thenReturn("10".getBytes(Charset.forName("UTF-8")));
+    SerializationService serializationServiceStub = mock(SerializationService.class);
+    int operationID = ClientProtocol.Request.RequestAPICase.GETREQUEST.getNumber();
 
     ClientProtocol.Request messageRequest = ClientProtocol.Request.newBuilder()
         .setGetRequest(RegionAPI.GetRequest.newBuilder()).build();
+
     RegionAPI.GetResponse expectedResponse = RegionAPI.GetResponse.newBuilder().build();
-    try {
-      when(opsHandlerRegistry.getOperationHandlerForOperationId(2))
-          .thenReturn(operationHandlerStub);
-    } catch (OperationHandlerNotRegisteredException e) {
-      e.printStackTrace();
-    }
-    when(operationHandlerStub.process(serializationService,
-        ProtobufRequestOperationParser.getRequestForOperationTypeID(messageRequest)))
-            .thenReturn(expectedResponse);
 
+    when(opsHandlerRegistryStub.getOperationHandlerForOperationId(operationID))
+        .thenReturn(operationHandlerStub);
+    when(operationHandlerStub.process(serializationServiceStub, ProtobufRequestOperationParser.getRequestForOperationTypeID(messageRequest)))
+        .thenReturn(expectedResponse);
 
-
-    OpsProcessor processor = new OpsProcessor(opsHandlerRegistry, serializationService);
+    OpsProcessor processor = new OpsProcessor(opsHandlerRegistryStub, serializationServiceStub);
     ClientProtocol.Response response = processor.process(messageRequest);
     Assert.assertEquals(expectedResponse, response.getGetResponse());
-
-  }
-
-  private class OpsProcessor {
-    private final OperationsHandlerRegistry opsHandlerRegistry;
-    private final SerializationService serializationService;
-
-    public OpsProcessor(OperationsHandlerRegistry opsHandlerRegistry,
-                        SerializationService serializationService) {
-      this.opsHandlerRegistry = opsHandlerRegistry;
-      this.serializationService = serializationService;
-    }
-
-    public ClientProtocol.Response process(ClientProtocol.Request request) {
-      OperationHandler opsHandler = null;
-      try {
-        opsHandler = opsHandlerRegistry.getOperationHandlerForOperationId(2);
-      } catch (OperationHandlerNotRegisteredException e) {
-        e.printStackTrace();
-      }
-
-      Object responseMessage = opsHandler.process(serializationService,
-          ProtobufRequestOperationParser.getRequestForOperationTypeID(request));
-      return ClientProtocol.Response.newBuilder()
-          .setGetResponse((RegionAPI.GetResponse) responseMessage).build();
-    }
   }
 }

@@ -32,25 +32,33 @@ public class ProtobufSerializationServiceImpl implements SerializationService<Ba
   }
 
   @Override
-  public Object decode(BasicTypes.EncodingType encodingTypeValue, byte[] value)
-      throws SerializationServiceException {
+  public byte[] encode(BasicTypes.EncodingType encodingTypeValue, Object value) throws SerializationServiceException {
     try {
-      SerializationType
-          serializationTypeForEncodingType =
-          translator.getSerializationTypeForEncodingType(encodingTypeValue);
-
-      TypeCodec
-          codecForType =
-          serializationCodecRegistry.getCodecForType(serializationTypeForEncodingType);
-      return codecForType.decode(value);
+      TypeCodec codecForType = getTypeCodecForProtobufType(encodingTypeValue);
+      return codecForType.encode(value);
     } catch (UnsupportedEncodingTypeException | CodecNotRegisteredForTypeException e) {
       e.printStackTrace();
-      throw new SerializationServiceException("",e);
+      throw new SerializationServiceException("Failed to encode object: " + value + " with encoding type: " + encodingTypeValue,e);
     }
   }
 
   @Override
-  public byte[] encode(BasicTypes.EncodingType encodingTypeValue, Object value) {
-    return new byte[0];
+  public Object decode(BasicTypes.EncodingType encodingTypeValue, byte[] value)
+      throws SerializationServiceException {
+    try {
+      TypeCodec codecForType = getTypeCodecForProtobufType(encodingTypeValue);
+      return codecForType.decode(value);
+    } catch (UnsupportedEncodingTypeException | CodecNotRegisteredForTypeException e) {
+      e.printStackTrace();
+      throw new SerializationServiceException("Failed to handle data of type:" + encodingTypeValue +" data: " + value,e);
+    }
+  }
+
+  private TypeCodec getTypeCodecForProtobufType(BasicTypes.EncodingType encodingTypeValue) throws UnsupportedEncodingTypeException, CodecNotRegisteredForTypeException {
+    SerializationType
+        serializationTypeForEncodingType =
+        translator.getSerializationTypeForEncodingType(encodingTypeValue);
+
+    return serializationCodecRegistry.getCodecForType(serializationTypeForEncodingType);
   }
 }

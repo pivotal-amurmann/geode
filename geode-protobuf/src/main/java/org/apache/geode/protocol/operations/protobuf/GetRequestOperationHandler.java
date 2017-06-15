@@ -17,6 +17,7 @@
 package org.apache.geode.protocol.operations.protobuf;
 
 import org.apache.geode.cache.Region;
+import org.apache.geode.cache.RegionService;
 import org.apache.geode.protocol.operations.OperationHandler;
 import org.apache.geode.protocol.protobuf.BasicTypes;
 import org.apache.geode.protocol.protobuf.ClientProtocol;
@@ -28,6 +29,13 @@ import org.apache.geode.serialization.protobuf.translation.exception.Unsupported
 
 public class GetRequestOperationHandler
     implements OperationHandler<RegionAPI.GetRequest, RegionAPI.GetResponse> {
+
+  RegionService regionService;
+
+  public void setRegionService(RegionService regionService) {
+    this.regionService = regionService;
+  }
+
   @Override
   public RegionAPI.GetResponse process(SerializationService serializationService,
                                        RegionAPI.GetRequest request) {
@@ -51,7 +59,12 @@ public class GetRequestOperationHandler
 
       resultEncodingType = EncodingTypeTranslator.getEncodingTypeForObject(resultValue);
 
-      byte[] resultEncodedValue = serializationService.encode(resultEncodingType, resultValue);
+      byte[] resultEncodedValue = null;
+      try {
+        resultEncodedValue = serializationService.encode(resultEncodingType, resultValue);
+      } catch (SerializationServiceException e) {
+        e.printStackTrace();
+      }
 
 //      BasicTypes.EncodedValue
 //          encodedValue =
@@ -69,8 +82,8 @@ public class GetRequestOperationHandler
     return ClientProtocol.Request.RequestAPICase.GETREQUEST.getNumber();
   }
 
+
   private Region getRegionForName(String regionName) {
-//    return regionService.getRegion(regionName);
-    return null;
+    return regionService.getRegion(regionName);
   }
 }

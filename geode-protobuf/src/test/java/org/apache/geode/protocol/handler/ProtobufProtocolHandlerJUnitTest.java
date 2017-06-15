@@ -85,4 +85,9 @@ public class ProtobufProtocolHandlerJUnitTest {
     protocolHandler.serialize(message, actualByteArrayOutputStream);
     Assert.assertArrayEquals(expectedByteArray, actualByteArrayOutputStream.toByteArray());
   }
+
+  @Test
+  public void testItDoesNotHangIfReceivingPartialMessage() {
+
+  }
 }

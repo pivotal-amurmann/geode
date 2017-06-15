@@ -27,26 +27,26 @@ public class OperationsHandlerRegistry {
   public OperationsHandlerRegistry() throws OperationHandlerAlreadyRegisteredException {
     ServiceLoader<OperationHandler> operationHandlers = ServiceLoader.load(OperationHandler.class);
     for (OperationHandler operationHandler : operationHandlers) {
-      registerOperationHandlerForOperationId(operationHandler.getOperationCode(),operationHandler);
+      registerOperationHandlerForOperationId(operationHandler.getOperationCode(), operationHandler);
     }
   }
 
   public OperationHandler getOperationHandlerForOperationId(int operationCode)
-      throws OperationHandlerNotRegisteredException {
+    throws OperationHandlerNotRegisteredException {
     OperationHandler operationHandler = registeredOperations.get(operationCode);
     if (operationHandler == null) {
       throw new OperationHandlerNotRegisteredException(
-          "There is no operation handler registered for operation code: " + operationCode);
+        "There is no operation handler registered for operation code: " + operationCode);
     }
     return operationHandler;
   }
 
   public synchronized void registerOperationHandlerForOperationId(int operationCode,
-      OperationHandler operationHandler) throws OperationHandlerAlreadyRegisteredException {
+                                                                  OperationHandler operationHandler) throws OperationHandlerAlreadyRegisteredException {
     if (registeredOperations.containsKey(operationCode)) {
       throw new OperationHandlerAlreadyRegisteredException(
-          "An operation handler for operationCode: " + operationCode
-              + " has already been registered!");
+        "An operation handler for operationCode: " + operationCode
+          + " has already been registered!");
     }
     registeredOperations.put(operationCode, operationHandler);
   }

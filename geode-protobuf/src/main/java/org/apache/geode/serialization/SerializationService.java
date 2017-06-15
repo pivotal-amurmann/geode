@@ -24,5 +24,5 @@ public interface SerializationService<T> {
 
   Object decode(T encodingTypeValue, byte[] value)
       throws UnsupportedEncodingTypeException, SerializationServiceException;
-  byte[] encode(T encodingTypeValue, Object value);
+  byte[] encode(T encodingTypeValue, Object value) throws SerializationServiceException;
 }
