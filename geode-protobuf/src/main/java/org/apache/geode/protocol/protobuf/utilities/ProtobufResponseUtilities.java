@@ -84,9 +84,8 @@ public abstract class ProtobufResponseUtilities {
    *
    * @return A response indicating a failure to find a requested key or value
    */
-  public static ClientProtocol.Response createNullGetResponse() {
-    return ClientProtocol.Response.newBuilder().setGetResponse(RegionAPI.GetResponse.newBuilder())
-        .build();
+  public static ClientProtocol.Response createNullGetResponse(){
+    return ClientProtocol.Response.newBuilder().setGetResponse(RegionAPI.GetResponse.newBuilder()).build();
   }
 
   /**
