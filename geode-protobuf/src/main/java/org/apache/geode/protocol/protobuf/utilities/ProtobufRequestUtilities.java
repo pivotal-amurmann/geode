@@ -14,7 +14,11 @@
  */
 package org.apache.geode.protocol.protobuf.utilities;
 
-import org.apache.geode.protocol.protobuf.*;
+import org.apache.geode.protocol.protobuf.BasicTypes;
+import org.apache.geode.protocol.protobuf.ClientProtocol;
+import org.apache.geode.protocol.protobuf.RegionAPI;
+
+import java.util.Set;
 
 /**
  * This class contains helper functions for generating ClientProtocol.Request objects
@@ -58,5 +62,39 @@ public abstract class ProtobufRequestUtilities {
     RegionAPI.PutRequest putRequest =
         RegionAPI.PutRequest.newBuilder().setRegionName(region).setEntry(entry).build();
     return ClientProtocol.Request.newBuilder().setPutRequest(putRequest).build();
+  }
+
+  /**
+   * Create a request to get the values for multiple keys
+   *
+   * @param regionName - Name of the region to fetch from
+   * @param keys - Set of keys being fetched
+   * @return Request object containing the getAll request
+   */
+  public static ClientProtocol.Request createGetAllRequest(String regionName,
+      Set<BasicTypes.EncodedValue> keys) {
+    RegionAPI.GetAllRequest.Builder builder =
+        RegionAPI.GetAllRequest.newBuilder().setRegionName(regionName);
+    for (BasicTypes.EncodedValue key : keys) {
+      builder.addKey(key);
+    }
+    return ClientProtocol.Request.newBuilder().setGetAllRequest(builder).build();
+  }
+
+  /**
+   * Create a request to insert multiple entries in a region
+   *
+   * @param regionName - Region to which entries are being added
+   * @param entries - key, value pairs to add to the region
+   * @return Request object containing the putAll request for the passed parameters
+   */
+  public static ClientProtocol.Request createPutAllRequest(String regionName,
+      Set<BasicTypes.Entry> entries) {
+    RegionAPI.PutAllRequest.Builder builder =
+        RegionAPI.PutAllRequest.newBuilder().setRegionName(regionName);
+    for (BasicTypes.Entry entry : entries) {
+      builder.addEntry(entry);
+    }
+    return ClientProtocol.Request.newBuilder().setPutAllRequest(builder).build();
   }
 }

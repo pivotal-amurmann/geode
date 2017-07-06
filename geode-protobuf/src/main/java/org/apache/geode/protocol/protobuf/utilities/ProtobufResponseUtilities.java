@@ -113,4 +113,34 @@ public abstract class ProtobufResponseUtilities {
     return ClientProtocol.Response.newBuilder().setPutResponse(RegionAPI.PutResponse.newBuilder())
         .build();
   }
+
+  /**
+   * This creates a response object containing a RegionAPI.GetAllResponse
+   *
+   * @param entries - key, value pairs for which lookups succeeded
+   * @return A response object containing all the passed results
+   */
+  public static ClientProtocol.Response createGetAllResponse(Set<BasicTypes.Entry> entries) {
+    RegionAPI.GetAllResponse.Builder builder = RegionAPI.GetAllResponse.newBuilder();
+    for (BasicTypes.Entry entry : entries) {
+      builder.addEntries(entry);
+    }
+    return ClientProtocol.Response.newBuilder().setGetAllResponse(builder).build();
+  }
+
+  /**
+   * This creates a response for a putAll request
+   *
+   * @param invalidKeys - set of any keys which were unable to be set
+   * @return A response object indicating any invalid keys (all others are assumed to have
+   *         succeeded)
+   */
+  public static ClientProtocol.Response createPutAllResponse(
+      Set<BasicTypes.EncodedValue> invalidKeys) {
+    RegionAPI.PutAllResponse.Builder builder = RegionAPI.PutAllResponse.newBuilder();
+    for (BasicTypes.EncodedValue key : invalidKeys) {
+      builder.addFailedKeys(key);
+    }
+    return ClientProtocol.Response.newBuilder().setPutAllResponse(builder).build();
+  }
 }
