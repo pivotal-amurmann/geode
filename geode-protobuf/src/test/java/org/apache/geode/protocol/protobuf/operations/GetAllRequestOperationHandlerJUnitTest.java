@@ -117,14 +117,19 @@ public class GetAllRequestOperationHandlerJUnitTest {
   }
 
   @Test
-  public void processReturnsErrorForNoKeysRequested()
+  public void processReturnsNoEntriesForNoKeysRequested()
       throws UnsupportedEncodingTypeException, CodecNotRegisteredForTypeException {
     ClientProtocol.Request getRequest = generateTestRequest(false);
     ClientProtocol.Response response =
         operationHandler.process(serializationServiceStub, getRequest, cacheStub);
 
-    Assert.assertEquals(ClientProtocol.Response.ResponseAPICase.ERRORRESPONSE,
+    Assert.assertEquals(ClientProtocol.Response.ResponseAPICase.GETALLRESPONSE,
         response.getResponseAPICase());
+
+    RegionAPI.GetAllResponse getAllResponse = response.getGetAllResponse();
+    List<BasicTypes.Entry> entriesList = getAllResponse.getEntriesList();
+    Map<String, String> responseEntries = convertEntryListToMap(entriesList);
+    Assert.assertEquals(0, responseEntries.size());
   }
 
   private ClientProtocol.Request generateTestRequest(boolean addKeys)

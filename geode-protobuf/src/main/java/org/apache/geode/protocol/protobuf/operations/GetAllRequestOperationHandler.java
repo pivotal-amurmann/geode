@@ -45,11 +45,6 @@ public class GetAllRequestOperationHandler
     }
     RegionAPI.GetAllRequest getAllRequest = request.getGetAllRequest();
 
-    if (getAllRequest.getKeyCount() == 0) {
-      return ProtobufResponseUtilities.createErrorResponse(false, false,
-          "No keys requested in getAll request");
-    }
-
     String regionName = getAllRequest.getRegionName();
     Region region = cache.getRegion(regionName);
     if (region == null) {

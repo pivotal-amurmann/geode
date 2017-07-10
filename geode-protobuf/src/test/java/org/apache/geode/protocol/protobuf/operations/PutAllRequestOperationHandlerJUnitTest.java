@@ -126,17 +126,17 @@ public class PutAllRequestOperationHandlerJUnitTest {
   }
 
   @Test
-  public void processWithNoEntriesReturnsAnError() throws Exception {
+  public void processWithNoEntriesPasses() throws Exception {
     PutAllRequestOperationHandler operationHandler = new PutAllRequestOperationHandler();
 
     ClientProtocol.Response response = operationHandler.process(serializationServiceStub,
         generateTestRequest(false, false), cacheStub);
 
-    Assert.assertEquals(ClientProtocol.Response.ResponseAPICase.ERRORRESPONSE,
-        response.getResponseAPICase());
+    Assert.assertEquals(ClientProtocol.Response.ResponseAPICase.PUTALLRESPONSE,
+      response.getResponseAPICase());
+    Assert.assertEquals(0, response.getPutAllResponse().getFailedKeysCount());
 
-    verify(regionMock, times(0)).put(anyString(), anyString());
-    verify(regionMock, times(0)).put(anyString(), anyInt());
+    verify(regionMock, times(0)).put(any(), any());
   }
 
   private ClientProtocol.Request generateTestRequest(boolean addInvalidKey, boolean addValidKeys)

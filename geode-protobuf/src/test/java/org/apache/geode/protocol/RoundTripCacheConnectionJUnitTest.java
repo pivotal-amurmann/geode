@@ -151,6 +151,40 @@ public class RoundTripCacheConnectionJUnitTest {
   }
 
   @Test
+  public void testPutAllWithInvalidTypes() throws Exception {
+    System.setProperty("geode.feature-protobuf-protocol", "true");
+
+    Socket socket = new Socket("localhost", cacheServerPort);
+    Awaitility.await().atMost(5, TimeUnit.SECONDS).until(socket::isConnected);
+    OutputStream outputStream = socket.getOutputStream();
+    outputStream.write(110);
+
+    ProtobufProtocolSerializer protobufProtocolSerializer = new ProtobufProtocolSerializer();
+    Set<BasicTypes.Entry> putEntries = new HashSet<>();
+    putEntries.add(ProtobufUtilities.createEntry(serializationService, TEST_MULTIOP_KEY1,
+      TEST_MULTIOP_VALUE1));
+    putEntries.add(ProtobufUtilities.createEntry(serializationService, TEST_MULTIOP_KEY2,
+      TEST_MULTIOP_VALUE2));
+    putEntries.add(ProtobufUtilities.createEntry(serializationService, TEST_MULTIOP_KEY3,
+      TEST_MULTIOP_VALUE3));
+    ClientProtocol.Message putAllMessage = ProtobufUtilities.createProtobufRequest(
+      ProtobufUtilities.createMessageHeader(TEST_PUT_CORRELATION_ID),
+      ProtobufRequestUtilities.createPutAllRequest(TEST_REGION, putEntries));
+    protobufProtocolSerializer.serialize(putAllMessage, outputStream);
+    validatePutAllResponse(socket, protobufProtocolSerializer);
+
+    Set<BasicTypes.EncodedValue> getEntries = new HashSet<>();
+    getEntries.add(ProtobufUtilities.createEncodedValue(serializationService, TEST_MULTIOP_KEY1));
+    getEntries.add(ProtobufUtilities.createEncodedValue(serializationService, TEST_MULTIOP_KEY2));
+    getEntries.add(ProtobufUtilities.createEncodedValue(serializationService, TEST_MULTIOP_KEY3));
+    ClientProtocol.Message getAllMessage = ProtobufUtilities.createProtobufRequest(
+      ProtobufUtilities.createMessageHeader(TEST_GET_CORRELATION_ID),
+      ProtobufRequestUtilities.createGetAllRequest(TEST_REGION, getEntries));
+    protobufProtocolSerializer.serialize(getAllMessage, outputStream);
+    validateGetAllResponse(socket, protobufProtocolSerializer);
+  }
+
+  @Test
   public void testNullResponse() throws Exception {
     System.setProperty("geode.feature-protobuf-protocol", "true");
 

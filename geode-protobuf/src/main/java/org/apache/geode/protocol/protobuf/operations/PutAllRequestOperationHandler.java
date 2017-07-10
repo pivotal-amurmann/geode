@@ -40,26 +40,36 @@ public class PutAllRequestOperationHandler
   @Override
   public ClientProtocol.Response process(SerializationService serializationService,
       ClientProtocol.Request request, Cache cache) {
-    if (request.getRequestAPICase() != ClientProtocol.Request.RequestAPICase.PUTALLREQUEST) {
-      return ProtobufResponseUtilities.createAndLogErrorResponse(false, false,
-          "Improperly formatted put request message.", logger, null);
-    }
     RegionAPI.PutAllRequest putAllRequest = request.getPutAllRequest();
-    if (putAllRequest.getEntryCount() == 0) {
-      return ProtobufResponseUtilities.createAndLogErrorResponse(false, false,
-          "No entries found in putAll request.", logger, null);
-    }
-
     String regionName = putAllRequest.getRegionName();
     Region region = cache.getRegion(regionName);
-    if (region == null) {
-      return ProtobufResponseUtilities.createAndLogErrorResponse(false, false,
-          "Region passed by client did not exist: " + regionName, logger, null);
+
+    Map<Object, Object> entries = new HashMap();
+    ClientProtocol.Response errorResponse = valdiateAndPopulateEntries(serializationService, request, putAllRequest, regionName, region, entries);
+    if(errorResponse != null) {
+      return errorResponse;
     }
 
-    // Read all of the entries out of the protobuf and return an error (without performing any puts)
-    // if any of the entries can't be decoded
-    Map<Object, Object> entries = new HashMap();
+    Set<BasicTypes.EncodedValue> invalidKeys = putValues(serializationService, region, entries);
+
+    return ProtobufResponseUtilities.createPutAllResponse(invalidKeys);
+  }
+
+  // Read all of the entries out of the protobuf and return an error (without performing any puts)
+  // if any of the entries can't be decoded
+  private  ClientProtocol.Response valdiateAndPopulateEntries(SerializationService serializationService, ClientProtocol.Request request, RegionAPI.PutAllRequest putAllRequest, String regionName, Region region,
+                                                              Map<Object, Object> entries) {
+    if (request.getRequestAPICase() != ClientProtocol.Request.RequestAPICase.PUTALLREQUEST) {
+      return ProtobufResponseUtilities.createAndLogErrorResponse(false, false,
+        "Improperly formatted put request message.", logger, null);
+    }
+
+    if (region == null) {
+      return ProtobufResponseUtilities.createAndLogErrorResponse(false, false,
+        "Region passed by client did not exist: " + regionName,
+        logger, null);
+    }
+
     try {
       for (BasicTypes.Entry entry : putAllRequest.getEntryList()) {
         Object decodedValue = ProtobufUtilities.decodeValue(serializationService, entry.getValue());
@@ -69,12 +79,16 @@ public class PutAllRequestOperationHandler
       }
     } catch (UnsupportedEncodingTypeException ex) {
       return ProtobufResponseUtilities.createAndLogErrorResponse(false, false,
-          "Encoding not supported ", logger, ex);
+        "Encoding not supported ", logger, ex);
     } catch (CodecNotRegisteredForTypeException ex) {
       return ProtobufResponseUtilities.createAndLogErrorResponse(true, false,
-          "Codec error in protobuf deserialization ", logger, ex);
+        "Codec error in protobuf deserialization ", logger, ex);
     }
 
+    return null;
+  }
+
+  private Set<BasicTypes.EncodedValue> putValues(SerializationService serializationService, Region region, Map<Object, Object> entries) {
     Set<BasicTypes.EncodedValue> invalidKeys = new HashSet<>();
     for (Map.Entry<Object, Object> entry : entries.entrySet()) {
       try {
@@ -96,6 +110,6 @@ public class PutAllRequestOperationHandler
         }
       }
     }
-    return ProtobufResponseUtilities.createPutAllResponse(invalidKeys);
+    return invalidKeys;
   }
 }
