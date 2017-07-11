@@ -37,39 +37,55 @@ public class PutAllRequestOperationHandler
     implements OperationHandler<ClientProtocol.Request, ClientProtocol.Response> {
   private static Logger logger = LogManager.getLogger();
 
+  private RegionAPI.PutAllRequest putAllRequest = null;
+  private Region region = null;
+  private Map<Object, Object> entries = null;
+
   @Override
   public ClientProtocol.Response process(SerializationService serializationService,
       ClientProtocol.Request request, Cache cache) {
-    RegionAPI.PutAllRequest putAllRequest = request.getPutAllRequest();
-    String regionName = putAllRequest.getRegionName();
-    Region region = cache.getRegion(regionName);
-
-    Map<Object, Object> entries = new HashMap();
-    ClientProtocol.Response errorResponse = valdiateAndPopulateEntries(serializationService, request, putAllRequest, regionName, region, entries);
-    if(errorResponse != null) {
+    ClientProtocol.Response errorResponse = validatePutAllRequest(request);
+    if (errorResponse == null) {
+      errorResponse = determinePutAllRegion(cache);
+    }
+    if (errorResponse == null) {
+      errorResponse = extractPutAllEntries(serializationService);
+    }
+    if (errorResponse == null) {
+      Set<BasicTypes.EncodedValue> invalidKeys = executePutAll(serializationService);
+      return ProtobufResponseUtilities.createPutAllResponse(invalidKeys);
+    } else {
       return errorResponse;
     }
+  }
 
-    Set<BasicTypes.EncodedValue> invalidKeys = putValues(serializationService, region, entries);
+  private ClientProtocol.Response validatePutAllRequest(ClientProtocol.Request request) {
+    if (request.getRequestAPICase() != ClientProtocol.Request.RequestAPICase.PUTALLREQUEST) {
+      return ProtobufResponseUtilities.createAndLogErrorResponse(false, false,
+          "Improperly formatted put request message.", logger, null);
+    }
 
-    return ProtobufResponseUtilities.createPutAllResponse(invalidKeys);
+    putAllRequest = request.getPutAllRequest();
+    return null;
+  }
+
+  private ClientProtocol.Response determinePutAllRegion(Cache cache) {
+    String regionName = putAllRequest.getRegionName();
+    region = cache.getRegion(regionName);
+
+    if (region == null) {
+      return ProtobufResponseUtilities.createAndLogErrorResponse(false, false,
+          "Region passed by client did not exist: " + regionName,
+          logger, null);
+    } else {
+      return null;
+    }
   }
 
   // Read all of the entries out of the protobuf and return an error (without performing any puts)
   // if any of the entries can't be decoded
-  private  ClientProtocol.Response valdiateAndPopulateEntries(SerializationService serializationService, ClientProtocol.Request request, RegionAPI.PutAllRequest putAllRequest, String regionName, Region region,
-                                                              Map<Object, Object> entries) {
-    if (request.getRequestAPICase() != ClientProtocol.Request.RequestAPICase.PUTALLREQUEST) {
-      return ProtobufResponseUtilities.createAndLogErrorResponse(false, false,
-        "Improperly formatted put request message.", logger, null);
-    }
-
-    if (region == null) {
-      return ProtobufResponseUtilities.createAndLogErrorResponse(false, false,
-        "Region passed by client did not exist: " + regionName,
-        logger, null);
-    }
-
+  private  ClientProtocol.Response extractPutAllEntries(SerializationService serializationService) {
+    entries = new HashMap();
     try {
       for (BasicTypes.Entry entry : putAllRequest.getEntryList()) {
         Object decodedValue = ProtobufUtilities.decodeValue(serializationService, entry.getValue());
@@ -88,7 +104,7 @@ public class PutAllRequestOperationHandler
     return null;
   }
 
-  private Set<BasicTypes.EncodedValue> putValues(SerializationService serializationService, Region region, Map<Object, Object> entries) {
+  private Set<BasicTypes.EncodedValue> executePutAll(SerializationService serializationService) {
     Set<BasicTypes.EncodedValue> invalidKeys = new HashSet<>();
     for (Map.Entry<Object, Object> entry : entries.entrySet()) {
       try {
