@@ -24,7 +24,7 @@ import java.util.Set;
 
 /**
  * This class contains helper functions for generating ClientProtocol.Response objects.
- *
+ * <p>
  * Request building helpers can be found in {@link ProtobufRequestUtilities}, while more general
  * purpose helpers can be found in {@link ProtobufUtilities}
  */
@@ -33,15 +33,15 @@ public abstract class ProtobufResponseUtilities {
    * This creates response object containing a ClientProtocol.ErrorResponse
    *
    * @param serverInternal - is this error internal to the server
-   * @param retriable - can the operation be retried with a potentially different result
-   * @param errorMessage - description of the error
+   * @param retriable      - can the operation be retried with a potentially different result
+   * @param errorMessage   - description of the error
    * @return An error response containing the above parameters
    */
   public static ClientProtocol.Response createErrorResponse(boolean serverInternal,
-      boolean retriable, String errorMessage) {
+                                                            boolean retriable, String errorMessage) {
     ClientProtocol.ErrorResponse error =
-        ClientProtocol.ErrorResponse.newBuilder().setInternalServerError(serverInternal)
-            .setRetriable(retriable).setMessage(errorMessage).build();
+      ClientProtocol.ErrorResponse.newBuilder().setInternalServerError(serverInternal)
+        .setRetriable(retriable).setMessage(errorMessage).build();
     return ClientProtocol.Response.newBuilder().setErrorResponse(error).build();
   }
 
@@ -50,14 +50,14 @@ public abstract class ProtobufResponseUtilities {
    * passed error message and exception (if present) to the provided logger.
    *
    * @param serverInternal - is this error internal to the server
-   * @param retriable - can the operation be retried with a potentially different result
-   * @param errorMessage - description of the error
-   * @param logger - logger to write the error message to
-   * @param ex - exception which should be logged
+   * @param retriable      - can the operation be retried with a potentially different result
+   * @param errorMessage   - description of the error
+   * @param logger         - logger to write the error message to
+   * @param ex             - exception which should be logged
    * @return An error response containing the first three parameters.
    */
   public static ClientProtocol.Response createAndLogErrorResponse(boolean serverInternal,
-      boolean retriable, String errorMessage, Logger logger, Exception ex) {
+                                                                  boolean retriable, String errorMessage, Logger logger, Exception ex) {
     if (ex != null) {
       logger.error(errorMessage, ex);
     } else {
@@ -70,12 +70,12 @@ public abstract class ProtobufResponseUtilities {
    * This creates a response object containing a RegionAPI.GetResponse
    *
    * @param resultValue - the encoded result value, see createEncodedValue in
-   *        {@link ProtobufUtilities}
+   *                    {@link ProtobufUtilities}
    * @return A response indicating the passed value was found for a incoming GetRequest
    */
   public static ClientProtocol.Response createGetResponse(BasicTypes.EncodedValue resultValue) {
     RegionAPI.GetResponse getResponse =
-        RegionAPI.GetResponse.newBuilder().setResult(resultValue).build();
+      RegionAPI.GetResponse.newBuilder().setResult(resultValue).build();
     return ClientProtocol.Response.newBuilder().setGetResponse(getResponse).build();
   }
 
@@ -86,7 +86,7 @@ public abstract class ProtobufResponseUtilities {
    */
   public static ClientProtocol.Response createNullGetResponse() {
     return ClientProtocol.Response.newBuilder().setGetResponse(RegionAPI.GetResponse.newBuilder())
-        .build();
+      .build();
   }
 
   /**
@@ -97,7 +97,7 @@ public abstract class ProtobufResponseUtilities {
    */
   public static ClientProtocol.Response createGetRegionNamesResponse(Set<Region<?, ?>> regionSet) {
     RegionAPI.GetRegionNamesResponse.Builder builder =
-        RegionAPI.GetRegionNamesResponse.newBuilder();
+      RegionAPI.GetRegionNamesResponse.newBuilder();
     for (Region region : regionSet) {
       builder.addRegions(region.getName());
     }
@@ -111,7 +111,7 @@ public abstract class ProtobufResponseUtilities {
    */
   public static ClientProtocol.Response createPutResponse() {
     return ClientProtocol.Response.newBuilder().setPutResponse(RegionAPI.PutResponse.newBuilder())
-        .build();
+      .build();
   }
 
   /**
@@ -131,16 +131,10 @@ public abstract class ProtobufResponseUtilities {
   /**
    * This creates a response for a putAll request
    *
-   * @param invalidKeys - set of any keys which were unable to be set
    * @return A response object indicating any invalid keys (all others are assumed to have
-   *         succeeded)
+   * succeeded)
    */
-  public static ClientProtocol.Response createPutAllResponse(
-      Set<BasicTypes.EncodedValue> invalidKeys) {
-    RegionAPI.PutAllResponse.Builder builder = RegionAPI.PutAllResponse.newBuilder();
-    for (BasicTypes.EncodedValue key : invalidKeys) {
-      builder.addFailedKeys(key);
-    }
-    return ClientProtocol.Response.newBuilder().setPutAllResponse(builder).build();
+  public static ClientProtocol.Response createPutAllResponse() {
+    return ClientProtocol.Response.newBuilder().setPutAllResponse(RegionAPI.PutAllResponse.newBuilder()).build();
   }
 }

@@ -26,16 +26,20 @@ import org.apache.geode.serialization.registry.exception.CodecAlreadyRegisteredF
 import org.apache.geode.serialization.registry.exception.CodecNotRegisteredForTypeException;
 import org.apache.geode.test.dunit.Assert;
 import org.apache.geode.test.junit.categories.UnitTest;
+import org.hamcrest.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static org.mockito.Mockito.*;
+import org.hamcrest.CoreMatchers;
 
 @Category(UnitTest.class)
 public class PutAllRequestOperationHandlerJUnitTest {
@@ -48,7 +52,7 @@ public class PutAllRequestOperationHandlerJUnitTest {
   private static final String TEST_VALUE3 = "my value3";
   private static final Integer TEST_INVALID_VALUE = 732;
   private static final String TEST_REGION = "test region";
-  private static final String TEST_INVALID_REGION = "invalid region";
+  private static final String EXCEPTION_TEXT = "Simulating put failure";
   private Cache cacheStub;
   private SerializationService serializationServiceStub;
   private Region regionMock;
@@ -73,8 +77,10 @@ public class PutAllRequestOperationHandlerJUnitTest {
     when(regionMock.put(TEST_KEY1, TEST_VALUE1)).thenReturn(null);
     when(regionMock.put(TEST_KEY2, TEST_VALUE2)).thenReturn(null);
     when(regionMock.put(TEST_KEY3, TEST_VALUE3)).thenReturn(null);
-    when(regionMock.put(TEST_INVALID_KEY, TEST_INVALID_VALUE))
-        .thenThrow(new ClassCastException("Simulating put failure"));
+    when(regionMock.putAll(CoreMatchers.
+
+      hasKey(TEST_INVALID_KEY))
+      .thenThrow(new ClassCastException(EXCEPTION_TEXT));
 
     cacheStub = mock(Cache.class);
     when(cacheStub.getRegion(TEST_REGION)).thenReturn(regionMock);
@@ -99,30 +105,26 @@ public class PutAllRequestOperationHandlerJUnitTest {
         response.getResponseAPICase());
     Assert.assertEquals(0, response.getPutAllResponse().getFailedKeysCount());
 
-    verify(regionMock).put(TEST_KEY1, TEST_VALUE1);
-    verify(regionMock).put(TEST_KEY2, TEST_VALUE2);
-    verify(regionMock).put(TEST_KEY3, TEST_VALUE3);
-    verify(regionMock, times(3)).put(anyString(), anyString());
+    HashMap<Object, Object> expectedValues = new HashMap<>();
+    expectedValues.put(TEST_KEY1, TEST_VALUE1);
+    expectedValues.put(TEST_KEY2, TEST_VALUE2);
+    expectedValues.put(TEST_KEY3, TEST_VALUE3);
+
+    verify(regionMock).putAll(expectedValues);
   }
 
   @Test
-  public void processWithInvalidEntryWillSucceedForValidEntries() throws Exception {
+  public void processWithInvalidEntryReturnsError() throws Exception {
     PutAllRequestOperationHandler operationHandler = new PutAllRequestOperationHandler();
 
     ClientProtocol.Response response = operationHandler.process(serializationServiceStub,
         generateTestRequest(true, true), cacheStub);
 
-    Assert.assertEquals(ClientProtocol.Response.ResponseAPICase.PUTALLRESPONSE,
+    Assert.assertEquals(ClientProtocol.Response.ResponseAPICase.ERRORRESPONSE,
         response.getResponseAPICase());
-    Assert.assertEquals(1, response.getPutAllResponse().getFailedKeysCount());
-    Assert.assertEquals(TEST_INVALID_KEY, ProtobufUtilities.decodeValue(serializationServiceStub,
-        response.getPutAllResponse().getFailedKeys(0)));
-
-    verify(regionMock).put(TEST_KEY1, TEST_VALUE1);
-    verify(regionMock).put(TEST_KEY2, TEST_VALUE2);
-    verify(regionMock).put(TEST_KEY3, TEST_VALUE3);
-    verify(regionMock, times(3)).put(anyString(), anyString());
-    verify(regionMock, times(1)).put(anyString(), anyInt());
+    Assert.assertThat(response.getErrorResponse().getMessage(),
+      CoreMatchers.containsString(EXCEPTION_TEXT));
+    // can't verify anything about put keys because we make no guarantees.
   }
 
   @Test
@@ -159,5 +161,19 @@ public class PutAllRequestOperationHandlerJUnitTest {
           ProtobufUtilities.createEncodedValue(serializationServiceStub, TEST_VALUE3)));
     }
     return ProtobufRequestUtilities.createPutAllRequest(TEST_REGION, entries);
+  }
+
+  private Matcher<Map> hasKey(final Object key) {
+    return new BaseMatcher<Map>() {
+      @Override
+      public boolean matches(final Object collection) {
+        final Map castCollection = (Map) collection;
+        return castCollection.containsKey(key);
+      }
+      @Override
+      public void describeTo(final Description description) {
+        description.appendText("Collection should have key").appendValue(key);
+      }
+    };
   }
 }

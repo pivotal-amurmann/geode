@@ -113,7 +113,7 @@ public class RoundTripCacheConnectionJUnitTest {
     ClientProtocol.Message getMessage = MessageUtil.makeGetRequestMessage(serializationService,
         TEST_KEY, TEST_REGION, ProtobufUtilities.createMessageHeader(TEST_GET_CORRELATION_ID));
     protobufProtocolSerializer.serialize(getMessage, outputStream);
-    validateGetResponse(socket, protobufProtocolSerializer);
+    validateGetResponse(socket, protobufProtocolSerializer, TEST_VALUE);
   }
 
   @Test
@@ -137,7 +137,7 @@ public class RoundTripCacheConnectionJUnitTest {
         ProtobufUtilities.createMessageHeader(TEST_PUT_CORRELATION_ID),
         ProtobufRequestUtilities.createPutAllRequest(TEST_REGION, putEntries));
     protobufProtocolSerializer.serialize(putAllMessage, outputStream);
-    validatePutAllResponse(socket, protobufProtocolSerializer);
+    validatePutAllResponse(socket, protobufProtocolSerializer, ClientProtocol.Response.ResponseAPICase.PUTALLRESPONSE);
 
     Set<BasicTypes.EncodedValue> getEntries = new HashSet<>();
     getEntries.add(ProtobufUtilities.createEncodedValue(serializationService, TEST_MULTIOP_KEY1));
@@ -151,7 +151,11 @@ public class RoundTripCacheConnectionJUnitTest {
   }
 
   @Test
-  public void testPutAllWithInvalidTypes() throws Exception {
+  public void multiKeyOperationErrorsWithClasscastException() throws Exception {
+    RegionFactory<Float, Object> regionFactory = cache.createRegionFactory();
+    regionFactory.setKeyConstraint(Float.class);
+    String regionName = "constraintRegion";
+    regionFactory.create(regionName);
     System.setProperty("geode.feature-protobuf-protocol", "true");
 
     Socket socket = new Socket("localhost", cacheServerPort);
@@ -161,7 +165,7 @@ public class RoundTripCacheConnectionJUnitTest {
 
     ProtobufProtocolSerializer protobufProtocolSerializer = new ProtobufProtocolSerializer();
     Set<BasicTypes.Entry> putEntries = new HashSet<>();
-    putEntries.add(ProtobufUtilities.createEntry(serializationService, TEST_MULTIOP_KEY1,
+    putEntries.add(ProtobufUtilities.createEntry(serializationService, new Float(2.2),
       TEST_MULTIOP_VALUE1));
     putEntries.add(ProtobufUtilities.createEntry(serializationService, TEST_MULTIOP_KEY2,
       TEST_MULTIOP_VALUE2));
@@ -169,19 +173,14 @@ public class RoundTripCacheConnectionJUnitTest {
       TEST_MULTIOP_VALUE3));
     ClientProtocol.Message putAllMessage = ProtobufUtilities.createProtobufRequest(
       ProtobufUtilities.createMessageHeader(TEST_PUT_CORRELATION_ID),
-      ProtobufRequestUtilities.createPutAllRequest(TEST_REGION, putEntries));
+      ProtobufRequestUtilities.createPutAllRequest(regionName, putEntries));
     protobufProtocolSerializer.serialize(putAllMessage, outputStream);
-    validatePutAllResponse(socket, protobufProtocolSerializer);
+    validatePutAllResponse(socket, protobufProtocolSerializer, ClientProtocol.Response.ResponseAPICase.ERRORRESPONSE);
 
-    Set<BasicTypes.EncodedValue> getEntries = new HashSet<>();
-    getEntries.add(ProtobufUtilities.createEncodedValue(serializationService, TEST_MULTIOP_KEY1));
-    getEntries.add(ProtobufUtilities.createEncodedValue(serializationService, TEST_MULTIOP_KEY2));
-    getEntries.add(ProtobufUtilities.createEncodedValue(serializationService, TEST_MULTIOP_KEY3));
-    ClientProtocol.Message getAllMessage = ProtobufUtilities.createProtobufRequest(
-      ProtobufUtilities.createMessageHeader(TEST_GET_CORRELATION_ID),
-      ProtobufRequestUtilities.createGetAllRequest(TEST_REGION, getEntries));
-    protobufProtocolSerializer.serialize(getAllMessage, outputStream);
-    validateGetAllResponse(socket, protobufProtocolSerializer);
+    ClientProtocol.Message getMessage = MessageUtil.makeGetRequestMessage(serializationService,
+      new Float(2.2), regionName, ProtobufUtilities.createMessageHeader(TEST_GET_CORRELATION_ID));
+    protobufProtocolSerializer.serialize(getMessage, outputStream);
+    validateGetResponse(socket, protobufProtocolSerializer, TEST_MULTIOP_VALUE1);
   }
 
   @Test
@@ -246,7 +245,7 @@ public class RoundTripCacheConnectionJUnitTest {
   }
 
   private void validateGetResponse(Socket socket,
-      ProtobufProtocolSerializer protobufProtocolSerializer)
+                                   ProtobufProtocolSerializer protobufProtocolSerializer, Object expectedValue)
       throws InvalidProtocolMessageException, IOException, UnsupportedEncodingTypeException,
       CodecNotRegisteredForTypeException, CodecAlreadyRegisteredForTypeException {
     ClientProtocol.Message message =
@@ -259,7 +258,7 @@ public class RoundTripCacheConnectionJUnitTest {
     RegionAPI.GetResponse getResponse = response.getGetResponse();
     BasicTypes.EncodedValue result = getResponse.getResult();
     assertEquals(BasicTypes.EncodingType.STRING, result.getEncodingType());
-    assertEquals(TEST_VALUE, new ProtobufSerializationService().decode(result.getEncodingType(),
+    assertEquals(expectedValue, new ProtobufSerializationService().decode(result.getEncodingType(),
         result.getValue().toByteArray()));
   }
 
@@ -279,14 +278,13 @@ public class RoundTripCacheConnectionJUnitTest {
   }
 
   private void validatePutAllResponse(Socket socket,
-      ProtobufProtocolSerializer protobufProtocolSerializer) throws Exception {
+                                      ProtobufProtocolSerializer protobufProtocolSerializer, ClientProtocol.Response.ResponseAPICase responseCase) throws Exception {
     ClientProtocol.Message message =
         protobufProtocolSerializer.deserialize(socket.getInputStream());
     assertEquals(TEST_PUT_CORRELATION_ID, message.getMessageHeader().getCorrelationId());
     assertEquals(ClientProtocol.Message.MessageTypeCase.RESPONSE, message.getMessageTypeCase());
     ClientProtocol.Response response = message.getResponse();
-    assertEquals(ClientProtocol.Response.ResponseAPICase.PUTALLRESPONSE,
-        response.getResponseAPICase());
+    assertEquals(responseCase, response.getResponseAPICase());
     RegionAPI.PutAllResponse putAllResponse = response.getPutAllResponse();
     assertEquals(0, putAllResponse.getFailedKeysCount());
   }

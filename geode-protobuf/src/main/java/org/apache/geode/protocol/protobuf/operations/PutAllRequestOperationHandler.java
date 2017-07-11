@@ -52,8 +52,14 @@ public class PutAllRequestOperationHandler
       errorResponse = extractPutAllEntries(serializationService);
     }
     if (errorResponse == null) {
-      Set<BasicTypes.EncodedValue> invalidKeys = executePutAll(serializationService);
-      return ProtobufResponseUtilities.createPutAllResponse(invalidKeys);
+      try {
+        region.putAll(entries);
+      } catch (Exception ex) {
+        return ProtobufResponseUtilities.createAndLogErrorResponse(false, false,
+          ex.getMessage(), logger, ex);
+      }
+
+      return ProtobufResponseUtilities.createPutAllResponse();
     } else {
       return errorResponse;
     }
@@ -104,28 +110,4 @@ public class PutAllRequestOperationHandler
     return null;
   }
 
-  private Set<BasicTypes.EncodedValue> executePutAll(SerializationService serializationService) {
-    Set<BasicTypes.EncodedValue> invalidKeys = new HashSet<>();
-    for (Map.Entry<Object, Object> entry : entries.entrySet()) {
-      try {
-        region.put(entry.getKey(), entry.getValue());
-      } catch (ClassCastException ex) {
-        try {
-          // Shouldn't be possible for this to fail as we're encoding a value we previously decoded.
-          // If this does throw, we don't have a proper response to the client (we can't encode the
-          // failed key and we can't fail the operation if some keys succeeded), hence the severity
-          // of the logger.fatal.
-          invalidKeys
-              .add(ProtobufUtilities.createEncodedValue(serializationService, entry.getKey()));
-        } catch (UnsupportedEncodingTypeException e) {
-          logger
-              .fatal("Failed to create encoding for successfully decoded value: " + entry.getKey());
-        } catch (CodecNotRegisteredForTypeException e) {
-          logger
-              .fatal("Failed to create encoding for successfully decoded value: " + entry.getKey());
-        }
-      }
-    }
-    return invalidKeys;
-  }
 }
