@@ -43,10 +43,15 @@ subprojects {
     testCompile 'eu.codearte.catch-exception:catch-throwable:' + project.'catch-throwable.version'
     testCompile 'junit:junit:' + project.'junit.version'
     testCompile 'org.assertj:assertj-core:' + project.'assertj-core.version'
-    testCompile 'org.mockito:mockito-core:' + project.'mockito-core.version'
     testCompile 'org.hamcrest:hamcrest-all:' + project.'hamcrest-all.version'
     testCompile 'org.jmock:jmock-junit4:' + project.'jmock.version'
     testCompile 'org.jmock:jmock-legacy:' + project.'jmock.version'
+
+    testCompile 'org.mockito:mockito-core:' + project.'mockito-core.version'
+    testCompile 'org.powermock:powermock-core:' + project.'powermock.version'
+    testCompile 'org.powermock:powermock-module-junit4:' + project.'powermock.version'
+    testCompile 'org.powermock:powermock-api-mockito2:' + project.'powermock.version'
+
     testCompile 'pl.pragmatists:JUnitParams:' + project.'JUnitParams.version'
 
     testRuntime 'cglib:cglib:' + project.'cglib.version'
@@ -154,6 +159,16 @@ subprojects {
       TestPropertiesWriter.writeTestProperties(buildDir, name)
     }
     reports.junitXml.destination = file "$buildDir/test-reports-dlock"
+  }
+  task backwardCompatibilityTest(type:Test) {
+    useJUnit {
+      includeCategories 'org.apache.geode.test.junit.categories.BackwardCompatibilityTest'
+      excludeCategories 'org.apache.geode.test.junit.categories.FlakyTest'
+    }
+    doFirst {
+      TestPropertiesWriter.writeTestProperties(buildDir, name)
+    }
+    reports.junitXml.destination = file "$buildDir/test-reports-backwardcompatibility"
   }
   task membershipTest(type:Test) {
     useJUnit {
