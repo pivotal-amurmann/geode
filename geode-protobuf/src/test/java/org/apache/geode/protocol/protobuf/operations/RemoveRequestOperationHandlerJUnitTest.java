@@ -16,6 +16,9 @@ package org.apache.geode.protocol.protobuf.operations;
 
 import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.Region;
+import org.apache.geode.protocol.operations.Failure;
+import org.apache.geode.protocol.operations.Result;
+import org.apache.geode.protocol.operations.Success;
 import org.apache.geode.protocol.protobuf.BasicTypes;
 import org.apache.geode.protocol.protobuf.ClientProtocol;
 import org.apache.geode.protocol.protobuf.RegionAPI;
@@ -34,6 +37,8 @@ import org.junit.experimental.categories.Category;
 
 import java.nio.charset.Charset;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -79,13 +84,11 @@ public class RemoveRequestOperationHandlerJUnitTest {
   public void processValidKeyRemovesTheEntryAndReturnSuccess()
       throws CodecAlreadyRegisteredForTypeException, UnsupportedEncodingTypeException,
       CodecNotRegisteredForTypeException {
-    ClientProtocol.Request removeRequest = generateTestRequest(false, false);
-    ClientProtocol.Response response =
+    RegionAPI.RemoveRequest removeRequest = generateTestRequest(false, false).getRemoveRequest();
+    Result<RegionAPI.RemoveResponse> result =
         operationHandler.process(serializationServiceStub, removeRequest, cacheStub);
 
-    Assert.assertEquals(ClientProtocol.Response.ResponseAPICase.REMOVERESPONSE,
-        response.getResponseAPICase());
-    RegionAPI.RemoveResponse removeResponse = response.getRemoveResponse();
+    assertTrue(result instanceof Success);
     verify(regionStub).remove(TEST_KEY);
   }
 
@@ -93,25 +96,22 @@ public class RemoveRequestOperationHandlerJUnitTest {
   public void processReturnsUnsucessfulResponseForInvalidRegion()
       throws CodecAlreadyRegisteredForTypeException, UnsupportedEncodingTypeException,
       CodecNotRegisteredForTypeException {
-    ClientProtocol.Request removeRequest = generateTestRequest(true, false);
-    ClientProtocol.Response response =
+    RegionAPI.RemoveRequest removeRequest = generateTestRequest(true, false).getRemoveRequest();
+    Result<RegionAPI.RemoveResponse> result =
         operationHandler.process(serializationServiceStub, removeRequest, cacheStub);
 
-    Assert.assertEquals(ClientProtocol.Response.ResponseAPICase.ERRORRESPONSE,
-        response.getResponseAPICase());
+    assertTrue(result instanceof Failure);
   }
 
   @Test
-  public void processReturnsKeyNotFoundWhenKeyIsNotFound()
+  public void processReturnsSuccessWhenKeyIsNotFound()
       throws CodecAlreadyRegisteredForTypeException, UnsupportedEncodingTypeException,
       CodecNotRegisteredForTypeException {
-    ClientProtocol.Request removeRequest = generateTestRequest(false, true);
-    ClientProtocol.Response response =
+    RegionAPI.RemoveRequest removeRequest = generateTestRequest(false, true).getRemoveRequest();
+    Result<RegionAPI.RemoveResponse> result =
         operationHandler.process(serializationServiceStub, removeRequest, cacheStub);
 
-    Assert.assertEquals(ClientProtocol.Response.ResponseAPICase.REMOVERESPONSE,
-        response.getResponseAPICase());
-    RegionAPI.RemoveResponse removeResponse = response.getRemoveResponse();
+    assertTrue(result instanceof Success);
   }
 
   @Test
@@ -123,12 +123,11 @@ public class RemoveRequestOperationHandlerJUnitTest {
     when(serializationServiceStub.decode(BasicTypes.EncodingType.STRING,
         TEST_KEY.getBytes(Charset.forName("UTF-8")))).thenThrow(exception);
 
-    ClientProtocol.Request removeRequest = generateTestRequest(false, false);
-    ClientProtocol.Response response =
+    RegionAPI.RemoveRequest removeRequest = generateTestRequest(false, false).getRemoveRequest();
+    Result<RegionAPI.RemoveResponse> result =
         operationHandler.process(serializationServiceStub, removeRequest, cacheStub);
 
-    Assert.assertEquals(ClientProtocol.Response.ResponseAPICase.ERRORRESPONSE,
-        response.getResponseAPICase());
+    assertTrue(result instanceof Failure);
   }
 
   private ClientProtocol.Request generateTestRequest(boolean missingRegion, boolean missingKey)

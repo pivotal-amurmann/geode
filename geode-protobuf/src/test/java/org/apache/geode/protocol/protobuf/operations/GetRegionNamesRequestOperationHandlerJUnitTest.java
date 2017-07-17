@@ -16,6 +16,8 @@ package org.apache.geode.protocol.protobuf.operations;
 
 import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.Region;
+import org.apache.geode.protocol.operations.Result;
+import org.apache.geode.protocol.operations.Success;
 import org.apache.geode.protocol.protobuf.BasicTypes;
 import org.apache.geode.protocol.protobuf.ClientProtocol;
 import org.apache.geode.protocol.protobuf.utilities.ProtobufRequestUtilities;
@@ -73,12 +75,12 @@ public class GetRegionNamesRequestOperationHandlerJUnitTest {
   @Test
   public void processReturnsCacheRegions() throws CodecAlreadyRegisteredForTypeException,
       UnsupportedEncodingTypeException, CodecNotRegisteredForTypeException {
-    ClientProtocol.Response response = operationHandler.process(serializationServiceStub,
-        ProtobufRequestUtilities.createGetRegionNamesRequest(), cacheStub);
-    Assert.assertEquals(ClientProtocol.Response.ResponseAPICase.GETREGIONNAMESRESPONSE,
-        response.getResponseAPICase());
+    Result<RegionAPI.GetRegionNamesResponse> result =
+        operationHandler.process(serializationServiceStub,
+            ProtobufRequestUtilities.createGetRegionNamesRequest(), cacheStub);
+    Assert.assertTrue(result instanceof Success);
 
-    RegionAPI.GetRegionNamesResponse getRegionsResponse = response.getGetRegionNamesResponse();
+    RegionAPI.GetRegionNamesResponse getRegionsResponse = result.getMessage();
     Assert.assertEquals(3, getRegionsResponse.getRegionsCount());
 
     // There's no guarantee for what order we receive the regions in from the response
@@ -98,12 +100,12 @@ public class GetRegionNamesRequestOperationHandlerJUnitTest {
     Cache emptyCache = mock(Cache.class);;
     when(emptyCache.rootRegions())
         .thenReturn(Collections.unmodifiableSet(new HashSet<Region<String, String>>()));
-    ClientProtocol.Response response = operationHandler.process(serializationServiceStub,
-        ProtobufRequestUtilities.createGetRegionNamesRequest(), emptyCache);
-    Assert.assertEquals(ClientProtocol.Response.ResponseAPICase.GETREGIONNAMESRESPONSE,
-        response.getResponseAPICase());
+    Result<RegionAPI.GetRegionNamesResponse> result =
+        operationHandler.process(serializationServiceStub,
+            ProtobufRequestUtilities.createGetRegionNamesRequest(), emptyCache);
+    Assert.assertTrue(result instanceof Success);
 
-    RegionAPI.GetRegionNamesResponse getRegionsResponse = response.getGetRegionNamesResponse();
+    RegionAPI.GetRegionNamesResponse getRegionsResponse = result.getMessage();
     Assert.assertEquals(0, getRegionsResponse.getRegionsCount());
   }
 }

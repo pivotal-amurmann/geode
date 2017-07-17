@@ -14,22 +14,31 @@
  */
 package org.apache.geode.protocol.operations;
 
-import org.apache.geode.cache.Cache;
 import org.apache.geode.protocol.protobuf.ClientProtocol;
-import org.apache.geode.protocol.protobuf.ProtobufOpsProcessor;
-import org.apache.geode.serialization.SerializationService;
 
-/**
- * This interface is implemented by a object capable of handling request types 'Req' and returning
- * an a response of type 'Resp'
- *
- * See {@link ProtobufOpsProcessor}
- */
-public interface OperationHandler<Req, Resp> {
-  /**
-   * Decode the message, deserialize contained values using the serialization service, do the work
-   * indicated on the provided cache, and return a response.
-   */
-  Result<Resp> process(SerializationService serializationService, Req request, Cache cache);
+import java.util.function.Function;
+
+public class Success<SuccessType> implements Result<SuccessType> {
+  private final SuccessType successResponse;
+
+  public Success(SuccessType successResponse) {
+    this.successResponse = successResponse;
+  }
+
+  @Override
+  public <T> T map(Function<SuccessType, T> successFunction,
+      Function<ClientProtocol.ErrorResponse, T> errorFunction) {
+    return successFunction.apply(successResponse);
+  }
+
+  @Override
+  public SuccessType getMessage() {
+    return successResponse;
+  }
+
+  @Override
+  public ClientProtocol.ErrorResponse getErrorMessage() {
+    throw new RuntimeException("This is a not Failure result");
+
+  }
 }
-

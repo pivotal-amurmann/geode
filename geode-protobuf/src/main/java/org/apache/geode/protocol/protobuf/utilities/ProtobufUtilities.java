@@ -15,7 +15,12 @@
 package org.apache.geode.protocol.protobuf.utilities;
 
 import com.google.protobuf.ByteString;
-import org.apache.geode.protocol.protobuf.*;
+
+import org.apache.geode.protocol.protobuf.BasicTypes;
+import org.apache.geode.protocol.protobuf.ClientProtocol;
+import org.apache.geode.protocol.protobuf.EncodingTypeTranslator;
+import org.apache.geode.protocol.protobuf.ProtobufSerializationService;
+import org.apache.geode.protocol.protobuf.RegionAPI;
 import org.apache.geode.serialization.SerializationService;
 import org.apache.geode.serialization.exception.UnsupportedEncodingTypeException;
 import org.apache.geode.serialization.registry.exception.CodecNotRegisteredForTypeException;
@@ -32,7 +37,7 @@ import org.apache.geode.serialization.registry.exception.CodecNotRegisteredForTy
 public abstract class ProtobufUtilities {
   /**
    * Creates a object containing the type and value encoding of a piece of data
-   *
+   * 
    * @param serializationService - object which knows how to encode objects for the protobuf
    *        protocol {@link ProtobufSerializationService}
    * @param unencodedValue - the value object which is to be encoded
@@ -54,7 +59,7 @@ public abstract class ProtobufUtilities {
 
   /**
    * Creates a protobuf key,value pair from an encoded key and value
-   *
+   * 
    * @param key - an EncodedValue containing the key of the entry
    * @param value - an EncodedValue containing the value of the entry
    * @return a protobuf Entry object containing the passed key and value
@@ -66,7 +71,7 @@ public abstract class ProtobufUtilities {
 
   /**
    * Creates a protobuf key,value pair from unencoded data
-   *
+   * 
    * @param serializationService - object which knows how to encode objects for the protobuf
    *        protocol {@link ProtobufSerializationService}
    * @param unencodedKey - the unencoded key for the entry
@@ -86,7 +91,7 @@ public abstract class ProtobufUtilities {
 
   /**
    * This creates a protobuf message containing a ClientProtocol.Response
-   *
+   * 
    * @param messageHeader - The header for the message
    * @param response - The response for the message
    * @return a protobuf Message containing the above parameters
@@ -99,20 +104,32 @@ public abstract class ProtobufUtilities {
 
   /**
    * This creates a protobuf message containing a ClientProtocol.Request
-   *
+   * 
    * @param messageHeader - The header for the message
    * @param request - The request for the message
    * @return a protobuf Message containing the above parameters
    */
-  public static ClientProtocol.Message createProtobufRequest(
+  public static ClientProtocol.Message createProtobufMessage(
       ClientProtocol.MessageHeader messageHeader, ClientProtocol.Request request) {
     return ClientProtocol.Message.newBuilder().setMessageHeader(messageHeader).setRequest(request)
         .build();
   }
 
   /**
+   * This creates a protobuf message containing a ClientProtocol.Request
+   * 
+   * @param messageHeader - The header for the message
+   * @param request - The request for the message
+   * @return a protobuf Message containing the above parameters
+   */
+  public static ClientProtocol.Request createProtobufRequestWithGetAllRequest(
+      RegionAPI.GetAllRequest getAllRequest) {
+    return ClientProtocol.Request.newBuilder().setGetAllRequest(getAllRequest).build();
+  }
+
+  /**
    * This builds the MessageHeader for a response which matches an incoming request
-   *
+   * 
    * @param request - The request message that we're responding to.
    * @return the MessageHeader the response to the passed request
    */
@@ -123,7 +140,7 @@ public abstract class ProtobufUtilities {
 
   /**
    * This creates a MessageHeader
-   *
+   * 
    * @param correlationId - An identifier used to correlate requests and responses
    * @return a MessageHeader containing the above parameters
    */
@@ -133,7 +150,7 @@ public abstract class ProtobufUtilities {
 
   /**
    * This will return the object encoded in a protobuf EncodedValue
-   *
+   * 
    * @param serializationService - object which knows how to encode objects for the protobuf
    *        protocol {@link ProtobufSerializationService}
    * @param encodedValue - The value to be decoded
@@ -149,5 +166,11 @@ public abstract class ProtobufUtilities {
     BasicTypes.EncodingType encoding = encodedValue.getEncodingType();
     byte[] bytes = encodedValue.getValue().toByteArray();
     return serializationService.decode(encoding, bytes);
+  }
+
+  public static ClientProtocol.Request createProtobufRequestWithGetRegionNamesRequest(
+      RegionAPI.GetRegionNamesRequest getRegionNamesRequest) {
+    return ClientProtocol.Request.newBuilder().setGetRegionNamesRequest(getRegionNamesRequest)
+        .build();
   }
 }

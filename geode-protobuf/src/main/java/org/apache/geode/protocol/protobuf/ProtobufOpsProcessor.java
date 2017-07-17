@@ -15,10 +15,9 @@
 package org.apache.geode.protocol.protobuf;
 
 import org.apache.geode.cache.Cache;
-import org.apache.geode.protocol.exception.InvalidProtocolMessageException;
-import org.apache.geode.protocol.operations.OperationHandler;
-import org.apache.geode.protocol.operations.registry.OperationsHandlerRegistry;
-import org.apache.geode.protocol.operations.registry.exception.OperationHandlerNotRegisteredException;
+import org.apache.geode.protocol.operations.OperationContext;
+import org.apache.geode.protocol.operations.Result;
+import org.apache.geode.protocol.operations.registry.OperationContextRegistry;
 import org.apache.geode.serialization.SerializationService;
 
 /**
@@ -26,21 +25,28 @@ import org.apache.geode.serialization.SerializationService;
  * it to the appropriate handler.
  */
 public class ProtobufOpsProcessor {
-  private final OperationsHandlerRegistry opsHandlerRegistry;
+
+  private final OperationContextRegistry operationContextRegistry;
   private final SerializationService serializationService;
 
-  public ProtobufOpsProcessor(OperationsHandlerRegistry opsHandlerRegistry,
-      SerializationService serializationService) {
-    this.opsHandlerRegistry = opsHandlerRegistry;
+  public ProtobufOpsProcessor(SerializationService serializationService,
+      OperationContextRegistry operationsContextRegistry) {
     this.serializationService = serializationService;
+    this.operationContextRegistry = operationsContextRegistry;
   }
 
-  public ClientProtocol.Response process(ClientProtocol.Request request, Cache cache)
-      throws OperationHandlerNotRegisteredException, InvalidProtocolMessageException {
+  public ClientProtocol.Response process(ClientProtocol.Request request, Cache cache) {
     ClientProtocol.Request.RequestAPICase requestType = request.getRequestAPICase();
-    OperationHandler opsHandler =
-        opsHandlerRegistry.getOperationHandlerForOperationId(requestType.getNumber());
+    OperationContext operationContext = operationContextRegistry.getOperationContext(requestType);
 
-    return (ClientProtocol.Response) opsHandler.process(serializationService, request, cache);
+    ClientProtocol.Response.Builder builder;
+
+    Result result = operationContext.getOperationHandler().process(serializationService,
+        operationContext.getFromRequest().apply(request), cache);
+
+    builder = (ClientProtocol.Response.Builder) result.map(operationContext.getToResponse(),
+        operationContext.getToErrorResponse());
+
+    return builder.build();
   }
 }

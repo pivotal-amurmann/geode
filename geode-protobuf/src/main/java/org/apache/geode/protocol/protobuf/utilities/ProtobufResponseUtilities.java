@@ -15,6 +15,8 @@
 package org.apache.geode.protocol.protobuf.utilities;
 
 import org.apache.geode.cache.Region;
+import org.apache.geode.protocol.operations.Failure;
+import org.apache.geode.protocol.operations.Success;
 import org.apache.geode.protocol.protobuf.BasicTypes;
 import org.apache.geode.protocol.protobuf.ClientProtocol;
 import org.apache.geode.protocol.protobuf.RegionAPI;
@@ -35,10 +37,9 @@ public abstract class ProtobufResponseUtilities {
    * @param errorMessage - description of the error
    * @return An error response containing the above parameters
    */
-  public static ClientProtocol.Response createErrorResponse(String errorMessage) {
-    ClientProtocol.ErrorResponse error =
-        ClientProtocol.ErrorResponse.newBuilder().setMessage(errorMessage).build();
-    return ClientProtocol.Response.newBuilder().setErrorResponse(error).build();
+  public static Failure createFailureResult(String errorMessage) {
+    return new Failure<>(
+        ClientProtocol.ErrorResponse.newBuilder().setMessage(errorMessage).build());
   }
 
   /**
@@ -50,14 +51,14 @@ public abstract class ProtobufResponseUtilities {
    * @param ex - exception which should be logged
    * @return An error response containing the first three parameters.
    */
-  public static ClientProtocol.Response createAndLogErrorResponse(String errorMessage,
-      Logger logger, Exception ex) {
+  public static Failure createAndLogFailureResult(String errorMessage, Logger logger,
+      Exception ex) {
     if (ex != null) {
       logger.error(errorMessage, ex);
     } else {
       logger.error(errorMessage);
     }
-    return createErrorResponse(errorMessage);
+    return createFailureResult(errorMessage);
   }
 
   /**
@@ -67,10 +68,9 @@ public abstract class ProtobufResponseUtilities {
    *        {@link ProtobufUtilities}
    * @return A response indicating the passed value was found for a incoming GetRequest
    */
-  public static ClientProtocol.Response createGetResponse(BasicTypes.EncodedValue resultValue) {
-    RegionAPI.GetResponse getResponse =
-        RegionAPI.GetResponse.newBuilder().setResult(resultValue).build();
-    return ClientProtocol.Response.newBuilder().setGetResponse(getResponse).build();
+  public static Success<RegionAPI.GetResponse> createGetResult(
+      BasicTypes.EncodedValue resultValue) {
+    return new Success<>(RegionAPI.GetResponse.newBuilder().setResult(resultValue).build());
   }
 
   /**
@@ -78,9 +78,8 @@ public abstract class ProtobufResponseUtilities {
    *
    * @return A response indicating the entry with the passed key was removed
    */
-  public static ClientProtocol.Response createRemoveResponse() {
-    RegionAPI.RemoveResponse removeResponse = RegionAPI.RemoveResponse.newBuilder().build();
-    return ClientProtocol.Response.newBuilder().setRemoveResponse(removeResponse).build();
+  public static Success<RegionAPI.RemoveResponse> createRemoveResult() {
+    return new Success<>(RegionAPI.RemoveResponse.newBuilder().build());
   }
 
   /**
@@ -88,9 +87,8 @@ public abstract class ProtobufResponseUtilities {
    *
    * @return A response indicating a failure to find a requested key or value
    */
-  public static ClientProtocol.Response createNullGetResponse() {
-    return ClientProtocol.Response.newBuilder().setGetResponse(RegionAPI.GetResponse.newBuilder())
-        .build();
+  public static Success<RegionAPI.GetResponse> createNullGetResult() {
+    return new Success<>(RegionAPI.GetResponse.newBuilder().build());
   }
 
   /**
@@ -99,13 +97,14 @@ public abstract class ProtobufResponseUtilities {
    * @param regionSet - A set of regions
    * @return A response object containing the names of the regions in the passed regionSet
    */
-  public static ClientProtocol.Response createGetRegionNamesResponse(Set<Region<?, ?>> regionSet) {
+  public static Success<RegionAPI.GetRegionNamesResponse> createGetRegionNamesResult(
+      Set<Region<?, ?>> regionSet) {
     RegionAPI.GetRegionNamesResponse.Builder builder =
         RegionAPI.GetRegionNamesResponse.newBuilder();
     for (Region region : regionSet) {
       builder.addRegions(region.getName());
     }
-    return ClientProtocol.Response.newBuilder().setGetRegionNamesResponse(builder).build();
+    return new Success<>(builder.build());
   }
 
   /**
@@ -113,9 +112,8 @@ public abstract class ProtobufResponseUtilities {
    *
    * @return A response object indicating a successful put
    */
-  public static ClientProtocol.Response createPutResponse() {
-    return ClientProtocol.Response.newBuilder().setPutResponse(RegionAPI.PutResponse.newBuilder())
-        .build();
+  public static Success<RegionAPI.PutResponse> createPutResponse() {
+    return new Success<>(RegionAPI.PutResponse.newBuilder().build());
   }
 
   /**
@@ -124,10 +122,9 @@ public abstract class ProtobufResponseUtilities {
    * @param entries - key, value pairs for which lookups succeeded
    * @return A response object containing all the passed results
    */
-  public static ClientProtocol.Response createGetAllResponse(Set<BasicTypes.Entry> entries) {
-    RegionAPI.GetAllResponse.Builder builder = RegionAPI.GetAllResponse.newBuilder();
-    builder.addAllEntries(entries);
-    return ClientProtocol.Response.newBuilder().setGetAllResponse(builder).build();
+  public static Success<RegionAPI.GetAllResponse> createGetAllResult(
+      Set<BasicTypes.Entry> entries) {
+    return new Success<>(RegionAPI.GetAllResponse.newBuilder().addAllEntries(entries).build());
   }
 
   /**
@@ -136,8 +133,7 @@ public abstract class ProtobufResponseUtilities {
    * @return A response object indicating any invalid keys (all others are assumed to have
    *         succeeded)
    */
-  public static ClientProtocol.Response createPutAllResponse() {
-    return ClientProtocol.Response.newBuilder()
-        .setPutAllResponse(RegionAPI.PutAllResponse.newBuilder()).build();
+  public static Success<RegionAPI.PutAllResponse> createPutAllResult() {
+    return new Success<>(RegionAPI.PutAllResponse.newBuilder().build());
   }
 }
