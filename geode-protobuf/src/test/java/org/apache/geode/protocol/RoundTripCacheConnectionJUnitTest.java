@@ -72,6 +72,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import javax.security.auth.callback.*;
+import javax.security.sasl.Sasl;
+
 /**
  * Test that switching on the header byte makes instances of
  * {@link GenericProtocolServerConnection}.
@@ -140,7 +143,6 @@ public class RoundTripCacheConnectionJUnitTest {
     Awaitility.await().atMost(5, TimeUnit.SECONDS).until(socket::isConnected);
     outputStream = socket.getOutputStream();
     outputStream.write(110);
-
     serializationService = new ProtobufSerializationService();
   }
 
@@ -153,6 +155,7 @@ public class RoundTripCacheConnectionJUnitTest {
 
   @Test
   public void testNewProtocolHeaderLeadsToNewProtocolServerConnection() throws Exception {
+    clientAuthentication(socket, "secretsecret1");
     ProtobufProtocolSerializer protobufProtocolSerializer = new ProtobufProtocolSerializer();
     ClientProtocol.Message putMessage =
         MessageUtil.makePutRequestMessage(serializationService, TEST_KEY, TEST_VALUE, TEST_REGION,
@@ -164,6 +167,12 @@ public class RoundTripCacheConnectionJUnitTest {
         TEST_KEY, TEST_REGION, ProtobufUtilities.createMessageHeader(TEST_GET_CORRELATION_ID));
     protobufProtocolSerializer.serialize(getMessage, outputStream);
     validateGetResponse(socket, protobufProtocolSerializer, TEST_VALUE);
+  }
+
+  @Test
+  public void testNewProtocolFailsToAuthenticate() throws Exception {
+    int response = clientAuthentication(socket, "wrongPassword");
+    assertEquals(Acceptor.UNSUCCESSFUL_SERVER_TO_CLIENT, response);
   }
 
   @Test
@@ -319,6 +328,31 @@ public class RoundTripCacheConnectionJUnitTest {
     assertEquals(Scope.DISTRIBUTED_NO_ACK, Scope.fromString(region.getScope()));
   }
 
+  private int clientAuthentication(Socket socket, String password) throws IOException {
+    OutputStream outputStream = socket.getOutputStream();
+    DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
+    DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+
+    String[] mechanisms = new String[]{"PLAIN"};
+    CallbackHandler callbackHandler = new ClientCallbackHandler(password);
+    javax.security.sasl.SaslClient
+            saslClient =
+            Sasl.createSaslClient(mechanisms, "myId", "geode", "localhost", Collections.emptyMap(),
+                    callbackHandler);
+    int length = dataInputStream.readInt();
+    if (length > 1000000) {
+      throw new IllegalStateException("invalid length read from stream");
+    }
+    byte[] challenge = new byte[length];
+    dataInputStream.readFully(challenge);
+
+
+    byte[] response = saslClient.evaluateChallenge(challenge);
+    dataOutputStream.writeInt(response.length);
+    dataOutputStream.write(response);
+    return dataInputStream.readByte();
+  }
+
   private void validatePutResponse(Socket socket,
       ProtobufProtocolSerializer protobufProtocolSerializer) throws Exception {
     ClientProtocol.Response response =
@@ -458,5 +492,34 @@ public class RoundTripCacheConnectionJUnitTest {
     return socketCreator.connectForClient("localhost", cacheServerPort, 5000);
   }
 
+  static class ClientCallbackHandler implements CallbackHandler {
+    private String password;
+
+    public ClientCallbackHandler(String password) {
+      this.password = password;
+    }
+
+    @Override
+    public void handle(Callback[] callbacks)
+            throws IOException, UnsupportedCallbackException {
+      System.out.println("ClientCallbackHandler invoked with " + callbacks.length + " callbacks");
+
+      for (int i = 0; i < callbacks.length; i++) {
+        System.out.println("ClientCallbackHandler processing callback " + callbacks[i]);
+
+        if (callbacks[i] instanceof NameCallback) {
+          NameCallback nc = (NameCallback) callbacks[i];
+          nc.setName("user123");
+        } else if (callbacks[i] instanceof PasswordCallback) {
+          PasswordCallback pc = (PasswordCallback) callbacks[i];
+          pc.setPassword(this.password.toCharArray());
+        } else if (callbacks[i] instanceof TextOutputCallback) {
+        } else {
+          throw new UnsupportedCallbackException
+                  (callbacks[i], "Unrecognized Callback");
+        }
+      }
+    }
+  }
 
 }
