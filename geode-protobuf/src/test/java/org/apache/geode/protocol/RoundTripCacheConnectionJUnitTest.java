@@ -30,13 +30,14 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.geode.internal.cache.tier.Acceptor;
+import org.apache.commons.io.IOUtils;
 import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
@@ -57,6 +58,7 @@ import org.apache.geode.distributed.ConfigurationProperties;
 import org.apache.geode.internal.AvailablePortHelper;
 import org.apache.geode.internal.admin.SSLConfig;
 import org.apache.geode.internal.cache.tier.sockets.GenericProtocolServerConnection;
+import org.apache.geode.internal.cache.tier.sockets.sasl.message.HandshakeRequest;
 import org.apache.geode.internal.net.SocketCreator;
 import org.apache.geode.internal.net.SocketCreatorFactory;
 import org.apache.geode.protocol.exception.InvalidProtocolMessageException;
@@ -157,7 +159,7 @@ public class RoundTripCacheConnectionJUnitTest {
 
   @Test
   public void testNewProtocolHeaderLeadsToNewProtocolServerConnection() throws Exception {
-    clientAuthentication(socket, "secretsecret");
+    authenicateClient(socket, "secretsecret");
     ProtobufProtocolSerializer protobufProtocolSerializer = new ProtobufProtocolSerializer();
     ClientProtocol.Message putMessage =
         MessageUtil.makePutRequestMessage(serializationService, TEST_KEY, TEST_VALUE, TEST_REGION,
@@ -173,7 +175,7 @@ public class RoundTripCacheConnectionJUnitTest {
 
   @Test
   public void testNewProtocolFailsToAuthenticate() throws Exception {
-//    int response = clientAuthentication(socket, "wrongPassword");
+//    int response = authenicateClient(socket, "wrongPassword");
 //    assertEquals(Acceptor.UNSUCCESSFUL_SERVER_TO_CLIENT, response);
   }
 
@@ -332,7 +334,7 @@ public class RoundTripCacheConnectionJUnitTest {
     assertEquals(Scope.DISTRIBUTED_NO_ACK, Scope.fromString(region.getScope()));
   }
 
-  private int clientAuthentication(Socket socket, String password) throws IOException {
+  private void authenicateClient(Socket socket, String password) throws IOException {
     OutputStream outputStream = socket.getOutputStream();
     DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
     DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
@@ -343,11 +345,21 @@ public class RoundTripCacheConnectionJUnitTest {
             saslClient =
             Sasl.createSaslClient(mechanisms, "myId", "geode", "localhost", Collections.emptyMap(),
                     callbackHandler);
+    HandshakeRequest
+        handshakeRequest =
+        new HandshakeRequest(HandshakeRequest.VERSION, "123a", "myID", "PLAIN");
     dataOutputStream.write(handshakeRequest.toByteArray());
-//    int length = dataInputStream.readInt();
-//    if (length > 1000000) {
-//      throw new IllegalStateException("invalid length read from stream");
-//    }
+
+    byte[] bytes = IOUtils.toByteArray(dataInputStream);
+    String[] responseStringArray = new String(bytes, Charset.forName("UTF8")).split("\00");
+    String startOfArray = responseStringArray[0];
+    if (!startOfArray.equals("PLAIN")) {
+      throw new RuntimeException("response string does not start with PLAIN.");
+    }
+
+    // FIXME - best way to read the stream
+    // FIXME - don't yet have a type to read the message
+
 //    byte[] challenge = new byte[length];
 //    dataInputStream.readFully(challenge);
 //
