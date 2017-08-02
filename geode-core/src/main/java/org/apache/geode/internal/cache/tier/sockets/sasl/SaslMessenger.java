@@ -1,11 +1,8 @@
 package org.apache.geode.internal.cache.tier.sockets.sasl;
 
-import org.apache.geode.internal.HeapDataOutputStream;
-import org.apache.geode.internal.InternalDataSerializer;
-import org.apache.geode.internal.util.BlobHelper;
-
-import java.io.*;
-import java.net.Socket;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 public class SaslMessenger {
   private DataInput inputStream;
@@ -17,13 +14,11 @@ public class SaslMessenger {
   }
 
   public void sendMessage(byte[] capture) throws IOException {
-    //InternalDataSerializer.writeByteArray(capture, outputStream);
     outputStream.writeInt(capture.length);
     outputStream.write(capture);
   }
 
   public byte[] readMessage() throws IOException {
-    //byte[] ret = InternalDataSerializer.readByteArray(inputStream);
     int byteArrayLength = inputStream.readInt();
     byte[] ret = new byte[byteArrayLength];
     inputStream.readFully(ret);

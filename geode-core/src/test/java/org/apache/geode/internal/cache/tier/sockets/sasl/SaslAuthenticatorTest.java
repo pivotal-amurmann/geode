@@ -51,23 +51,22 @@ public class SaslAuthenticatorTest {
     };
     when(saslServerMock.evaluateResponse(isA(byte[].class))).thenReturn(challengesFromServer[0],
         challengesFromServer[1]);
-    when(saslServerMock.isComplete()).thenReturn(false, true);
+    when(saslServerMock.isComplete()).thenReturn(true);
     when(saslMessengerStub.readMessage()).thenReturn(new byte[] {6, 7, 8});
 
     boolean authenticateClient = saslServer.authenticateClient();
 
-    verify(saslServerMock, times(challengesFromServer.length)).evaluateResponse(saslServerArgumentCaptor.capture());
-    verify(saslMessengerStub, times(1)).sendMessage(messengerArgumentCaptor.capture());
+    verify(saslServerMock, times(1)).evaluateResponse(saslServerArgumentCaptor.capture());
+    verify(saslMessengerStub, times(0)).sendMessage(messengerArgumentCaptor.capture());
     assertTrue(authenticateClient);
 
-    List<byte[]> sentMessages = messengerArgumentCaptor.getAllValues();
-    assertEquals(1, sentMessages.size());
-    assertArrayEquals(challengesFromServer[0], sentMessages.get(0));
+//    List<byte[]> sentMessages = messengerArgumentCaptor.getAllValues();
+//    assertEquals(1, sentMessages.size());
+//    assertArrayEquals(challengesFromServer[0], sentMessages.get(0));
 
     List<byte[]> passedResponses = saslServerArgumentCaptor.getAllValues();
-    assertEquals(2, passedResponses.size());
-    assertArrayEquals(new byte[0], passedResponses.get(0));
-    assertArrayEquals(new byte[] {6, 7, 8}, passedResponses.get(1)); // response from client
+    assertEquals(1, passedResponses.size());
+    assertArrayEquals(new byte[] {6, 7, 8}, passedResponses.get(0)); // response from client
 
     verify(saslMessengerStub, times(1)).readMessage();
   }
@@ -77,22 +76,24 @@ public class SaslAuthenticatorTest {
     SaslServer saslServerMock = mock(SaslServer.class);
     SaslMessenger saslMessengerStub = mock(SaslMessenger.class);
     SaslAuthenticator
-        saslServer = new SaslAuthenticator(saslServerMock, saslMessengerStub);
+        saslAuthenticator = new SaslAuthenticator(saslServerMock, saslMessengerStub);
     ArgumentCaptor<byte[]> saslServerArgumentCaptor = ArgumentCaptor.forClass(byte[].class);
     ArgumentCaptor<byte[]> messengerArgumentCaptor = ArgumentCaptor.forClass(byte[].class);
     byte[][] challengesFromServer = {
         new byte[] {0, 1, 2},
         new byte[0],
     };
-    when(saslServerMock.evaluateResponse(isA(byte[].class))).thenReturn(challengesFromServer[0]).thenThrow(new SaslException("Invalid response"));
+    when(saslServerMock.evaluateResponse(isA(byte[].class))).thenThrow(new SaslException("Invalid response"));
     when(saslServerMock.isComplete()).thenReturn(false);
     when(saslMessengerStub.readMessage()).thenReturn(new byte[] {6, 7, 8});
 
-    boolean authenticateClient = saslServer.authenticateClient();
+    boolean clientIsAuthenticated = saslAuthenticator.authenticateClient();
 
-    verify(saslServerMock, times(challengesFromServer.length)).evaluateResponse(saslServerArgumentCaptor.capture());
-    verify(saslMessengerStub, times(1)).sendMessage(messengerArgumentCaptor.capture());
-    assertFalse(authenticateClient);
+    assertFalse(clientIsAuthenticated);
+
+    verify(saslServerMock, times(1)).evaluateResponse(saslServerArgumentCaptor.capture());
+//    verify(saslMessengerStub, times(1)).sendMessage(messengerArgumentCaptor.capture());
+//    assertFalse(clientIsAuthenticated);
   }
 
   @Test
@@ -101,8 +102,6 @@ public class SaslAuthenticatorTest {
     SaslMessenger saslMessengerStub = mock(SaslMessenger.class);
     SaslAuthenticator
             saslServer = new SaslAuthenticator(saslServerMock, saslMessengerStub);
-    ArgumentCaptor<byte[]> saslServerArgumentCaptor = ArgumentCaptor.forClass(byte[].class);
-    ArgumentCaptor<byte[]> messengerArgumentCaptor = ArgumentCaptor.forClass(byte[].class);
     byte[][] challengesFromServer = {
             new byte[] {0, 1, 2},
             new byte[0],
