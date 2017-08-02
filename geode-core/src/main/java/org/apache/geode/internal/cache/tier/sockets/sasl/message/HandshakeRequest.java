@@ -1,19 +1,20 @@
 package org.apache.geode.internal.cache.tier.sockets.sasl.message;
 
-import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.charset.Charset;
+
+import javax.security.sasl.AuthenticationException;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 
 public class HandshakeRequest {
+  public static final String VERSION="0.1";
   private final String version;
   private final String mechanism;
   private final String clientID;
   private final String correlationID;
-
 
   public HandshakeRequest(String version, String correlationID, String clientID, String mechanism) {
     this.version = version;
@@ -50,16 +51,25 @@ public class HandshakeRequest {
     byte[] mechanismBytes = mechanism.getBytes(Charset.forName("UTF8"));
     byte[] correlationBytes = correlationID.getBytes(Charset.forName("UTF8"));
     byte[] clientIDBytes = clientID.getBytes(Charset.forName("UTF8"));
-    out.writeInt(versionBytes.length);
     out.write(versionBytes);
-    out.writeInt(correlationBytes.length);
+    out.writeByte(0);
     out.write(correlationBytes);
-    out.writeInt(clientIDBytes.length);
+    out.writeByte(0);
     out.write(clientIDBytes);
-    out.writeInt(mechanismBytes.length);
+    out.writeByte(0);
     out.write(mechanismBytes);
+    out.writeByte(0);
   }
 
-  private void readExternal(DataInput in) throws IOException, ClassNotFoundException {
+  public static HandshakeRequest from(byte[] message) throws AuthenticationException {
+    String[] strings = new String(message, Charset.forName("UTF8")).split("\00");
+    if (strings.length > 0 && strings[0].equals(VERSION)) {
+      if (strings.length != 4) {
+        throw new AuthenticationException("Malformed handshake request.");
+      }
+      return new HandshakeRequest(strings[0], strings[1], strings[2], strings[3]);
+    } else {
+      throw new AuthenticationException("Unknown version number. Expected '" + VERSION + "'.");
+    }
   }
 }

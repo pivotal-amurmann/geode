@@ -74,7 +74,7 @@ public class ServerConnectionFactory {
         protobufProtocolHandler = findClientProtocolMessageHandler();
         return new GenericProtocolServerConnection(s, c, helper, stats, hsTimeout, socketBufferSize,
             communicationModeStr, communicationMode, acceptor, protobufProtocolHandler,
-            securityService);
+            securityService, null);
       }
     } else {
       return new LegacyServerConnection(s, c, helper, stats, hsTimeout, socketBufferSize,

@@ -14,21 +14,28 @@
  */
 package org.apache.geode.internal.cache.tier.sockets;
 
+import static junit.framework.TestCase.assertFalse;
+import static org.apache.geode.internal.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.apache.geode.internal.Assert;
 import org.apache.geode.internal.cache.InternalCache;
 import org.apache.geode.internal.cache.tier.Acceptor;
 import org.apache.geode.internal.cache.tier.CachedRegionHelper;
+import org.apache.geode.internal.cache.tier.sockets.sasl.AuthenticationService;
 import org.apache.geode.internal.security.SecurityService;
 import org.apache.geode.test.junit.categories.UnitTest;
+
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 
@@ -38,10 +45,10 @@ public class GenericProtocolServerConnectionTest {
   public void testProcessFlag() throws IOException {
     try {
       System.setProperty("geode.feature-protobuf-protocol", "true");
-      ServerConnection serverConnection = IOExceptionThrowingServerConnection();
-      Assert.assertTrue(serverConnection.processMessages);
+      ServerConnection serverConnection = createIOExceptionThrowingServerConnection();
+      assertTrue(serverConnection.processMessages);
       serverConnection.doOneMessage();
-      Assert.assertTrue(!serverConnection.processMessages);
+      assertFalse(serverConnection.processMessages);
     } finally {
       System.clearProperty("geode.feature-protobuf-protocol");
     }
@@ -49,15 +56,100 @@ public class GenericProtocolServerConnectionTest {
 
   @Test
   public void testAuthenticationSuccess() throws IOException {
-    ServerConnection serverConnection = IOExceptionThrowingServerConnection();
-    Assert.assertTrue(serverConnection.processMessages);
+    ServerConnection serverConnection = createIOExceptionThrowingServerConnection();
+    assertTrue(serverConnection.processMessages);
     serverConnection.doOneMessage();
+    // Following requests are authenticated
   }
 
   @Test
-  public void testAuthenticationFailure() {}
+  public void testAuthenticationNotCompleteYet() throws IOException {
+    Socket socketStub = mock(Socket.class);
+    when(socketStub.getInetAddress()).thenReturn(InetAddress.getByName("localhost"));
+    OutputStream stubOutputStream = mock(OutputStream.class);
+    InputStream stubInputStream = mock(InputStream.class);
+    when(socketStub.getInputStream()).thenReturn(stubInputStream);
+    when(socketStub.getOutputStream()).thenReturn(stubOutputStream);
+    InternalCache internalCacheStub = mock(InternalCache.class);
+    CachedRegionHelper cachedRegionHelperStub = mock(CachedRegionHelper.class);
+    CacheServerStats stubCacheServerStats = mock(CacheServerStats.class);
+    AcceptorImpl stubAcceptor = mock(AcceptorImpl.class);
+    ClientProtocolMessageHandler stubClientProtocolMessageHandler = mock(ClientProtocolMessageHandler.class);
+    SecurityService stubSecurityService = mock(SecurityService.class);
+    AuthenticationService mockAuthenticationService = mock(AuthenticationService.class);
+    when(mockAuthenticationService.process(stubInputStream, stubOutputStream)).thenReturn(
+        AuthenticationService.AuthenticationProgress.AUTHENTICATION_IN_PROGRESS
+    );
 
-  private static ServerConnection IOExceptionThrowingServerConnection() throws IOException {
+
+    GenericProtocolServerConnection testConnection = new GenericProtocolServerConnection(
+        socketStub,
+        internalCacheStub,
+        cachedRegionHelperStub,
+        stubCacheServerStats,
+        1,
+        1,
+        "PLAIN",
+        (byte)1,
+        stubAcceptor,
+        stubClientProtocolMessageHandler,
+        stubSecurityService,
+        mockAuthenticationService
+    );
+
+    testConnection.doOneMessage();
+    assertTrue(testConnection.processMessages);
+
+    testConnection.doOneMessage();
+    assertTrue(testConnection.processMessages);
+
+    verify(mockAuthenticationService, times(2)).process(stubInputStream, stubOutputStream);
+    verify(stubClientProtocolMessageHandler, times(0)).receiveMessage(any(), any(), any());
+  }
+
+  @Test
+  public void testAuthenticationFailure() throws IOException {
+    Socket socketStub = mock(Socket.class);
+    when(socketStub.getInetAddress()).thenReturn(InetAddress.getByName("localhost"));
+    OutputStream stubOutputStream = mock(OutputStream.class);
+    InputStream stubInputStream = mock(InputStream.class);
+    when(socketStub.getInputStream()).thenReturn(stubInputStream);
+    when(socketStub.getOutputStream()).thenReturn(stubOutputStream);
+    InternalCache internalCacheStub = mock(InternalCache.class);
+    CachedRegionHelper cachedRegionHelperStub = mock(CachedRegionHelper.class);
+    CacheServerStats stubCacheServerStats = mock(CacheServerStats.class);
+    AcceptorImpl stubAcceptor = mock(AcceptorImpl.class);
+    ClientProtocolMessageHandler stubClientProtocolMessageHandler = mock(ClientProtocolMessageHandler.class);
+    SecurityService stubSecurityService = mock(SecurityService.class);
+    AuthenticationService mockAuthenticationService = mock(AuthenticationService.class);
+    when(mockAuthenticationService.process(stubInputStream, stubOutputStream)).thenReturn(
+        AuthenticationService.AuthenticationProgress.AUTHENTICATION_FAILED
+    );
+
+    GenericProtocolServerConnection testConnection = new GenericProtocolServerConnection(
+        socketStub,
+        internalCacheStub,
+        cachedRegionHelperStub,
+        stubCacheServerStats,
+        1,
+        1,
+        "PLAIN",
+        (byte)1,
+        stubAcceptor,
+        stubClientProtocolMessageHandler,
+        stubSecurityService,
+        mockAuthenticationService
+    );
+
+    testConnection.doOneMessage();
+    assertFalse(testConnection.processMessages);
+
+    verify(mockAuthenticationService, times(1)).process(stubInputStream, stubOutputStream);
+    verify(stubClientProtocolMessageHandler, times(0)).receiveMessage(any(), any(), any());
+    // assert socket is closed
+  }
+
+  private static ServerConnection createIOExceptionThrowingServerConnection() throws IOException {
     Socket socketMock = mock(Socket.class);
     when(socketMock.getInetAddress()).thenReturn(InetAddress.getByName("localhost"));
 
@@ -67,6 +159,6 @@ public class GenericProtocolServerConnectionTest {
     return new GenericProtocolServerConnection(socketMock, mock(InternalCache.class),
         mock(CachedRegionHelper.class), mock(CacheServerStats.class), 0, 0, "",
         Acceptor.PROTOBUF_CLIENT_SERVER_PROTOCOL, mock(AcceptorImpl.class), clientProtocolMock,
-        mock(SecurityService.class));
+        mock(SecurityService.class), null);
   }
 }

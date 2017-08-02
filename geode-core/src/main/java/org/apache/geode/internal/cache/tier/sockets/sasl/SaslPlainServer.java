@@ -1,12 +1,10 @@
 package org.apache.geode.internal.cache.tier.sockets.sasl;
 
-import java.security.Principal;
 import java.util.Properties;
 
 import javax.security.sasl.AuthenticationException;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
-
 
 import org.apache.geode.security.AuthenticationFailedException;
 import org.apache.geode.security.SecurityManager;
