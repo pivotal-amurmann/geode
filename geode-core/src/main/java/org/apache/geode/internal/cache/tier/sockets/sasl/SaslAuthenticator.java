@@ -41,14 +41,8 @@ public class SaslAuthenticator {
 
   public boolean authenticateClient() {
     try {
-      byte[] challenge = saslServer.evaluateResponse(new byte[0]);
-
-      while(!saslServer.isComplete()) {
-        saslMessenger.sendMessage(challenge);
-        byte[] response = saslMessenger.readMessage();
-        challenge = saslServer.evaluateResponse(response);
-      }
-      System.out.println(">>>>>>> Completed authentication");
+      byte[] response = saslMessenger.readMessage();
+      saslServer.evaluateResponse(response);
 
       return true;
     } catch (IOException e) {

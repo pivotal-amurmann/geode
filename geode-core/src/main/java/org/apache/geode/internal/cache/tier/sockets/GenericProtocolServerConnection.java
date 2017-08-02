@@ -21,11 +21,13 @@ import org.apache.geode.internal.cache.tier.CachedRegionHelper;
 import org.apache.geode.internal.cache.tier.sockets.sasl.SaslAuthenticator;
 import org.apache.geode.internal.cache.tier.sockets.sasl.SaslCallbackHandler;
 import org.apache.geode.internal.cache.tier.sockets.sasl.SaslMessenger;
+import org.apache.geode.internal.cache.tier.sockets.sasl.SaslPlainServer;
 import org.apache.geode.internal.security.SecurityService;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
+
 import java.io.*;
 import java.net.Socket;
 import java.nio.channels.AcceptPendingException;
@@ -43,11 +45,13 @@ public class GenericProtocolServerConnection extends ServerConnection {
    * Creates a new <code>GenericProtocolServerConnection</code> that processes messages received
    * from an edge client over a given <code>Socket</code>.
    */
-  public GenericProtocolServerConnection(Socket s, InternalCache c, CachedRegionHelper helper,
-      CacheServerStats stats, int hsTimeout, int socketBufferSize, String communicationModeStr,
-      byte communicationMode, Acceptor acceptor, ClientProtocolMessageHandler newClientProtocol,
-      SecurityService securityService) {
-    super(s, c, helper, stats, hsTimeout, socketBufferSize, communicationModeStr, communicationMode,
+  public GenericProtocolServerConnection(Socket socket, InternalCache internalCache, CachedRegionHelper helper,
+                                         CacheServerStats stats, int hsTimeout,
+                                         int socketBufferSize, String communicationModeStr,
+                                         byte communicationMode, Acceptor acceptor,
+                                         ClientProtocolMessageHandler newClientProtocol,
+                                         SecurityService securityService) {
+    super(socket, internalCache, helper, stats, hsTimeout, socketBufferSize, communicationModeStr, communicationMode,
         acceptor, securityService);
     this.messageHandler = newClientProtocol;
   }
@@ -70,15 +74,21 @@ public class GenericProtocolServerConnection extends ServerConnection {
 
   private void authenticateClient(DataInputStream inputStream, DataOutputStream outputStream)
       throws IOException {
-      SaslServer saslServer = Sasl.createSaslServer("PLAIN", "geode", "localhost", Collections.emptyMap(), new SaslCallbackHandler());
-      SaslAuthenticator saslAuthenticator = new SaslAuthenticator(saslServer, new SaslMessenger(inputStream, outputStream));
-//      if(!isAutenticated) {
-      if (saslAuthenticator.authenticateClient()) {
-        outputStream.writeByte(Acceptor.SUCCESSFUL_SERVER_TO_CLIENT);
-      } else {
-        outputStream.writeByte(Acceptor.UNSUCCESSFUL_SERVER_TO_CLIENT);
-      }
-      isAutenticated = true;
+    if (!securityService.isClientSecurityRequired()) {
+      outputStream.writeByte(Acceptor.UNSUCCESSFUL_SERVER_TO_CLIENT);
+      return;
+    }
+//      SaslServer saslServer = Sasl.createSaslServer("PLAIN", "geode", "localhost", Collections.emptyMap(), new SaslCallbackHandler());
+    SaslServer saslServer = new SaslPlainServer(securityService.getSecurityManager());
+    SaslAuthenticator
+        saslAuthenticator =
+        new SaslAuthenticator(saslServer, new SaslMessenger(inputStream, outputStream));
+    if (saslAuthenticator.authenticateClient()) {
+      outputStream.writeByte(Acceptor.SUCCESSFUL_SERVER_TO_CLIENT);
+    } else {
+      outputStream.writeByte(Acceptor.UNSUCCESSFUL_SERVER_TO_CLIENT);
+    }
+    isAutenticated = true;
 //      }
     System.out.println("Done authenticating");
   }
