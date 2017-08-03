@@ -15,6 +15,7 @@
 package org.apache.geode.protocol.protobuf;
 
 import org.apache.geode.cache.Cache;
+import org.apache.geode.internal.cache.tier.sockets.sasl.ExecutionContext;
 import org.apache.geode.protocol.protobuf.registry.OperationContextRegistry;
 import org.apache.geode.serialization.SerializationService;
 
@@ -33,15 +34,16 @@ public class ProtobufOpsProcessor {
     this.operationContextRegistry = operationContextRegistry;
   }
 
-  public ClientProtocol.Response process(ClientProtocol.Request request, Cache cache) {
+  public ClientProtocol.Response process(ClientProtocol.Request request, ExecutionContext executionContext) {
     ClientProtocol.Request.RequestAPICase requestType = request.getRequestAPICase();
     OperationContext operationContext = operationContextRegistry.getOperationContext(requestType);
     ClientProtocol.Response.Builder builder;
     Result result = operationContext.getOperationHandler().process(serializationService,
-        operationContext.getFromRequest().apply(request), cache);
+        operationContext.getFromRequest().apply(request), executionContext);
 
     builder = (ClientProtocol.Response.Builder) result.map(operationContext.getToResponse(),
         operationContext.getToErrorResponse());
+
     return builder.build();
   }
 }

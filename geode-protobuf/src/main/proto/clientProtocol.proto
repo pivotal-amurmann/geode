@@ -19,6 +19,7 @@ package org.apache.geode.protocol.protobuf;
 import "google/protobuf/any.proto";
 import "region_API.proto";
 import "server_API.proto";
+import "authentication_API.proto";
 import "basicTypes.proto";
 
 message Message {
@@ -52,6 +53,10 @@ message Request {
         GetRegionNamesRequest getRegionNamesRequest = 43;
         GetRegionRequest getRegionRequest = 44;
 
+        AuthenticationHandshakeRequest authenticationHandshakeRequest = 60;
+        AuthenticationRequest authenticationRequest = 61;
+
+
     }
 }
 
@@ -73,6 +78,9 @@ message Response {
         GetAvailableServersResponse getAvailableServersResponse = 42;
         GetRegionNamesResponse getRegionNamesResponse = 43;
         GetRegionResponse getRegionResponse = 44;
+
+        AuthenticationHandshakeResponse authenticationHandshakeResponse = 60;
+        AuthenticationResponse authenticationResponse = 61;
     }
 }
 

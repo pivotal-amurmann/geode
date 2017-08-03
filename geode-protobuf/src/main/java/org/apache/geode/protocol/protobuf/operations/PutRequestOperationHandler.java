@@ -16,6 +16,7 @@ package org.apache.geode.protocol.protobuf.operations;
 
 import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.Region;
+import org.apache.geode.internal.cache.tier.sockets.sasl.ExecutionContext;
 import org.apache.geode.protocol.operations.OperationHandler;
 import org.apache.geode.protocol.protobuf.BasicTypes;
 import org.apache.geode.protocol.protobuf.Failure;
@@ -33,9 +34,9 @@ public class PutRequestOperationHandler
 
   @Override
   public Result<RegionAPI.PutResponse> process(SerializationService serializationService,
-      RegionAPI.PutRequest request, Cache cache) {
+      RegionAPI.PutRequest request, ExecutionContext executionContext) {
     String regionName = request.getRegionName();
-    Region region = cache.getRegion(regionName);
+    Region region = executionContext.getCache().getRegion(regionName);
     if (region == null) {
       return Failure.of(BasicTypes.ErrorResponse.newBuilder()
           .setErrorCode(ProtocolErrorCode.REGION_NOT_FOUND.codeValue)

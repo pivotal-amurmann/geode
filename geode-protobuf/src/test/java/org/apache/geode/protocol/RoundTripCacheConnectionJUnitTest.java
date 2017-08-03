@@ -29,6 +29,7 @@ import org.apache.geode.internal.cache.tier.sockets.sasl.message.HandshakeReques
 import org.apache.geode.internal.net.SocketCreator;
 import org.apache.geode.internal.net.SocketCreatorFactory;
 import org.apache.geode.protocol.exception.InvalidProtocolMessageException;
+import org.apache.geode.protocol.protobuf.AuthenticationAPI;
 import org.apache.geode.protocol.protobuf.BasicTypes;
 import org.apache.geode.protocol.protobuf.ClientProtocol;
 import org.apache.geode.protocol.protobuf.ProtobufSerializationService;
@@ -111,6 +112,7 @@ public class RoundTripCacheConnectionJUnitTest {
 
   @Rule
   public TestName testName = new TestName();
+  private ProtobufProtocolSerializer protobufProtocolSerializer;
 
   @Before
   public void setup() throws Exception {
@@ -145,6 +147,7 @@ public class RoundTripCacheConnectionJUnitTest {
     outputStream = socket.getOutputStream();
     outputStream.write(110);
     serializationService = new ProtobufSerializationService();
+    protobufProtocolSerializer = new ProtobufProtocolSerializer();
   }
 
   @After
@@ -156,8 +159,7 @@ public class RoundTripCacheConnectionJUnitTest {
 
   @Test
   public void testNewProtocolHeaderLeadsToNewProtocolServerConnection() throws Exception {
-    authenicateClient(socket, "secretsecret");
-    ProtobufProtocolSerializer protobufProtocolSerializer = new ProtobufProtocolSerializer();
+//    authenicateClient(socket, "secretsecret");
     ClientProtocol.Message putMessage =
         MessageUtil.makePutRequestMessage(serializationService, TEST_KEY, TEST_VALUE, TEST_REGION,
             ProtobufUtilities.createMessageHeader(TEST_PUT_CORRELATION_ID));
@@ -185,7 +187,6 @@ public class RoundTripCacheConnectionJUnitTest {
     OutputStream outputStream = socket.getOutputStream();
     outputStream.write(110);
 
-    ProtobufProtocolSerializer protobufProtocolSerializer = new ProtobufProtocolSerializer();
     Set<BasicTypes.Entry> putEntries = new HashSet<>();
     putEntries.add(ProtobufUtilities.createEntry(serializationService, TEST_MULTIOP_KEY1,
         TEST_MULTIOP_VALUE1));
@@ -227,7 +228,6 @@ public class RoundTripCacheConnectionJUnitTest {
     OutputStream outputStream = socket.getOutputStream();
     outputStream.write(110);
 
-    ProtobufProtocolSerializer protobufProtocolSerializer = new ProtobufProtocolSerializer();
     Set<BasicTypes.Entry> putEntries = new HashSet<>();
     Float validKey = new Float(2.2);
     putEntries
@@ -264,7 +264,6 @@ public class RoundTripCacheConnectionJUnitTest {
   @Test
   public void testNullResponse() throws Exception {
     // Get request without any data set must return a null
-    ProtobufProtocolSerializer protobufProtocolSerializer = new ProtobufProtocolSerializer();
     ClientProtocol.Message getMessage = MessageUtil.makeGetRequestMessage(serializationService,
         TEST_KEY, TEST_REGION, ProtobufUtilities.createMessageHeader(TEST_GET_CORRELATION_ID));
     protobufProtocolSerializer.serialize(getMessage, outputStream);
@@ -282,7 +281,6 @@ public class RoundTripCacheConnectionJUnitTest {
   public void testNewProtocolGetRegionNamesCallSucceeds() throws Exception {
     int correlationId = TEST_GET_CORRELATION_ID; // reuse this value for this test
 
-    ProtobufProtocolSerializer protobufProtocolSerializer = new ProtobufProtocolSerializer();
     RegionAPI.GetRegionNamesRequest getRegionNamesRequest =
         ProtobufRequestUtilities.createGetRegionNamesRequest();
 
@@ -307,7 +305,6 @@ public class RoundTripCacheConnectionJUnitTest {
     OutputStream outputStream = socket.getOutputStream();
     outputStream.write(110);
 
-    ProtobufProtocolSerializer protobufProtocolSerializer = new ProtobufProtocolSerializer();
     ClientProtocol.Message getRegionMessage = MessageUtil.makeGetRegionRequestMessage(TEST_REGION,
         ClientProtocol.MessageHeader.newBuilder().build());
     protobufProtocolSerializer.serialize(getRegionMessage, outputStream);
@@ -329,40 +326,28 @@ public class RoundTripCacheConnectionJUnitTest {
     assertEquals(Scope.DISTRIBUTED_NO_ACK, Scope.fromString(region.getScope()));
   }
 
-  private void authenicateClient(Socket socket, String password) throws IOException {
+  private void authenicateClient(Socket socket, String password)
+      throws IOException, InvalidProtocolMessageException {
     OutputStream outputStream = socket.getOutputStream();
-    DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-    DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+    InputStream inputStream = socket.getInputStream();
 
-    String[] mechanisms = new String[]{"PLAIN"};
-    CallbackHandler callbackHandler = new ClientCallbackHandler(password);
-    javax.security.sasl.SaslClient
-            saslClient =
-            Sasl.createSaslClient(mechanisms, "myId", "geode", "localhost", Collections.emptyMap(),
-                    callbackHandler);
-    HandshakeRequest
+    String mechanism = "PLAIN";
+    AuthenticationAPI.AuthenticationHandshakeRequest.Builder
         handshakeRequest =
-        new HandshakeRequest(HandshakeRequest.VERSION, "123a", "myID", "PLAIN");
-    dataOutputStream.write(handshakeRequest.toByteArray());
+        AuthenticationAPI.AuthenticationHandshakeRequest.newBuilder().addMechanism(mechanism);
+    ClientProtocol.Message
+        message =
+        ClientProtocol.Message.newBuilder().setRequest(
+            ClientProtocol.Request.newBuilder().setAuthenticationHandshakeRequest(handshakeRequest))
+                .build();
+    protobufProtocolSerializer.serialize(message, outputStream);
 
-    byte[] bytes = IOUtils.toByteArray(dataInputStream);
-    String[] responseStringArray = new String(bytes, Charset.forName("UTF8")).split("\00");
-    String startOfArray = responseStringArray[0];
-    if (!startOfArray.equals("PLAIN")) {
-      throw new RuntimeException("response string does not start with PLAIN.");
-    }
+    AuthenticationAPI.AuthenticationHandshakeResponse
+        authenticationHandshakeResponse =
+        protobufProtocolSerializer.deserialize(inputStream).getResponse()
+            .getAuthenticationHandshakeResponse();
 
-    // FIXME - best way to read the stream
-    // FIXME - don't yet have a type to read the message
-
-//    byte[] challenge = new byte[length];
-//    dataInputStream.readFully(challenge);
-//
-//
-//    byte[] response = saslClient.evaluateChallenge(challenge);
-//    dataOutputStream.writeInt(response.length);
-//    dataOutputStream.write(response);
-//    return dataInputStream.readByte();
+    assertEquals(mechanism, authenticationHandshakeResponse.getMechanism());
   }
 
   private void validatePutResponse(Socket socket,

@@ -28,6 +28,7 @@ import org.junit.experimental.categories.Category;
 
 import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.Region;
+import org.apache.geode.internal.cache.tier.sockets.sasl.ExecutionContext;
 import org.apache.geode.protocol.protobuf.BasicTypes;
 import org.apache.geode.protocol.protobuf.RegionAPI;
 import org.apache.geode.protocol.protobuf.Result;
@@ -66,7 +67,7 @@ public class GetRegionNamesRequestOperationHandlerJUnitTest extends OperationHan
       UnsupportedEncodingTypeException, CodecNotRegisteredForTypeException {
     Result<RegionAPI.GetRegionNamesResponse> result =
         operationHandler.process(serializationServiceStub,
-            ProtobufRequestUtilities.createGetRegionNamesRequest(), cacheStub);
+            ProtobufRequestUtilities.createGetRegionNamesRequest(), executionContext);
     Assert.assertTrue(result instanceof Success);
 
     RegionAPI.GetRegionNamesResponse getRegionsResponse = result.getMessage();
@@ -91,7 +92,7 @@ public class GetRegionNamesRequestOperationHandlerJUnitTest extends OperationHan
         .thenReturn(Collections.unmodifiableSet(new HashSet<Region<String, String>>()));
     Result<RegionAPI.GetRegionNamesResponse> result =
         operationHandler.process(serializationServiceStub,
-            ProtobufRequestUtilities.createGetRegionNamesRequest(), emptyCache);
+            ProtobufRequestUtilities.createGetRegionNamesRequest(), new ExecutionContext(emptyCache, authenticationContextStub));
     Assert.assertTrue(result instanceof Success);
 
     RegionAPI.GetRegionNamesResponse getRegionsResponse = result.getMessage();

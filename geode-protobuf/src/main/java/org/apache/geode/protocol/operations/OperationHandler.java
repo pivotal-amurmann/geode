@@ -15,6 +15,7 @@
 package org.apache.geode.protocol.operations;
 
 import org.apache.geode.cache.Cache;
+import org.apache.geode.internal.cache.tier.sockets.sasl.ExecutionContext;
 import org.apache.geode.protocol.protobuf.ProtobufOpsProcessor;
 import org.apache.geode.protocol.protobuf.Result;
 import org.apache.geode.serialization.SerializationService;
@@ -30,6 +31,6 @@ public interface OperationHandler<Req, Resp> {
    * Decode the message, deserialize contained values using the serialization service, do the work
    * indicated on the provided cache, and return a response.
    */
-  Result<Resp> process(SerializationService serializationService, Req request, Cache cache);
+  Result<Resp> process(SerializationService serializationService, Req request, ExecutionContext executionContext);
 }
 

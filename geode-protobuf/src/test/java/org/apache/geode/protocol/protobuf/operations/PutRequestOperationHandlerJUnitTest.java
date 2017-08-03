@@ -65,7 +65,7 @@ public class PutRequestOperationHandlerJUnitTest extends OperationHandlerJUnitTe
       CodecNotRegisteredForTypeException, CodecAlreadyRegisteredForTypeException {
     PutRequestOperationHandler operationHandler = new PutRequestOperationHandler();
     Result<RegionAPI.PutResponse> result =
-        operationHandler.process(serializationServiceStub, generateTestRequest(), cacheStub);
+        operationHandler.process(serializationServiceStub, generateTestRequest(), executionContext);
 
     assertTrue(result instanceof Success);
 
@@ -96,7 +96,7 @@ public class PutRequestOperationHandlerJUnitTest extends OperationHandlerJUnitTe
     RegionAPI.PutRequest putRequest =
         ProtobufRequestUtilities.createPutRequest(TEST_REGION, testEntry).getPutRequest();
     Result<RegionAPI.PutResponse> result =
-        operationHandler.process(serializationServiceStub, putRequest, cacheStub);
+        operationHandler.process(serializationServiceStub, putRequest, executionContext);
 
     assertTrue(result instanceof Failure);
     assertEquals(ProtocolErrorCode.VALUE_ENCODING_ERROR.codeValue,
@@ -109,7 +109,7 @@ public class PutRequestOperationHandlerJUnitTest extends OperationHandlerJUnitTe
     when(cacheStub.getRegion(TEST_REGION)).thenReturn(null);
     PutRequestOperationHandler operationHandler = new PutRequestOperationHandler();
     Result<RegionAPI.PutResponse> result =
-        operationHandler.process(serializationServiceStub, generateTestRequest(), cacheStub);
+        operationHandler.process(serializationServiceStub, generateTestRequest(), executionContext);
 
     assertTrue(result instanceof Failure);
     assertEquals(ProtocolErrorCode.REGION_NOT_FOUND.codeValue,
@@ -123,7 +123,7 @@ public class PutRequestOperationHandlerJUnitTest extends OperationHandlerJUnitTe
 
     PutRequestOperationHandler operationHandler = new PutRequestOperationHandler();
     Result<RegionAPI.PutResponse> result =
-        operationHandler.process(serializationServiceStub, generateTestRequest(), cacheStub);
+        operationHandler.process(serializationServiceStub, generateTestRequest(), executionContext);
 
     assertTrue(result instanceof Failure);
     assertEquals(ProtocolErrorCode.CONSTRAINT_VIOLATION.codeValue,

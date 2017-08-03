@@ -15,11 +15,11 @@
 
 package org.apache.geode.internal.cache.tier.sockets;
 
-import org.apache.geode.internal.cache.InternalCache;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import org.apache.geode.internal.cache.tier.sockets.sasl.ExecutionContext;
 
 /**
  * This is an interface that other modules can implement to hook into
@@ -30,6 +30,7 @@ import java.io.OutputStream;
  * {@link GenericProtocolServerConnection}.
  */
 public interface ClientProtocolMessageHandler {
-  void receiveMessage(InputStream inputStream, OutputStream outputStream, InternalCache cache)
+  void receiveMessage(InputStream inputStream, OutputStream outputStream,
+                      ExecutionContext executionContext)
       throws IOException;
 }

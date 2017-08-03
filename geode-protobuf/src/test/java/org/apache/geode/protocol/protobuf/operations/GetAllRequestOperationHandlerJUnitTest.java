@@ -82,7 +82,7 @@ public class GetAllRequestOperationHandlerJUnitTest extends OperationHandlerJUni
       throws CodecAlreadyRegisteredForTypeException, UnsupportedEncodingTypeException,
       CodecNotRegisteredForTypeException {
     Result<RegionAPI.GetAllResponse> result =
-        operationHandler.process(serializationServiceStub, generateTestRequest(true), cacheStub);
+        operationHandler.process(serializationServiceStub, generateTestRequest(true), executionContext);
 
     Assert.assertTrue(result instanceof Success);
 
@@ -102,7 +102,7 @@ public class GetAllRequestOperationHandlerJUnitTest extends OperationHandlerJUni
   public void processReturnsNoEntriesForNoKeysRequested()
       throws UnsupportedEncodingTypeException, CodecNotRegisteredForTypeException {
     Result<RegionAPI.GetAllResponse> result =
-        operationHandler.process(serializationServiceStub, generateTestRequest(false), cacheStub);
+        operationHandler.process(serializationServiceStub, generateTestRequest(false), executionContext);
 
     Assert.assertTrue(result instanceof Success);
 
