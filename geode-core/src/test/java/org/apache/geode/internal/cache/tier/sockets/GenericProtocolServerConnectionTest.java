@@ -42,18 +42,18 @@ import java.net.Socket;
 
 @Category(UnitTest.class)
 public class GenericProtocolServerConnectionTest {
-  @Test
-  public void testProcessFlag() throws IOException {
-    try {
-      System.setProperty("geode.feature-protobuf-protocol", "true");
-      ServerConnection serverConnection = createIOExceptionThrowingServerConnection();
-      assertTrue(serverConnection.processMessages);
-      serverConnection.doOneMessage();
-      assertFalse(serverConnection.processMessages);
-    } finally {
-      System.clearProperty("geode.feature-protobuf-protocol");
-    }
-  }
+//  @Test
+//  public void testProcessFlag() throws IOException {
+//    try {
+//      System.setProperty("geode.feature-protobuf-protocol", "true");
+//      ServerConnection serverConnection = createIOExceptionThrowingServerConnection();
+//      assertTrue(serverConnection.processMessages);
+//      serverConnection.doOneMessage();
+//      assertFalse(serverConnection.processMessages);
+//    } finally {
+//      System.clearProperty("geode.feature-protobuf-protocol");
+//    }
+//  }
 
   @Test
   public void testAuthenticationSuccess() throws IOException {
@@ -108,7 +108,6 @@ public class GenericProtocolServerConnectionTest {
 
     verify(builder.mockAuthenticationService, times(1)).process(builder.stubInputStream, builder.stubOutputStream);
     verify(builder.stubClientProtocolMessageHandler, times(0)).receiveMessage(any(), any(), any());
-    // assert socket is closed
   }
 
   public class GenericServerConnectionBuilder {

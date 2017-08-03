@@ -45,6 +45,17 @@ public class HandshakeRequest {
     return version;
   }
 
+  public static HandshakeRequest from(byte[] message) throws AuthenticationException {
+    String[] strings = new String(message, Charset.forName("UTF8")).split("\00");
+    if (strings.length > 0 && strings[0].equals(VERSION)) {
+      if (strings.length != 4) {
+        throw new AuthenticationException("Malformed handshake request.");
+      }
+      return new HandshakeRequest(strings[0], strings[1], strings[2], strings[3]);
+    } else {
+      throw new AuthenticationException("Unknown version number. Expected '" + VERSION + "'.");
+    }
+  }
 
   private void writeBytesToStream(DataOutput out) throws IOException {
     byte[] versionBytes = version.getBytes(Charset.forName("UTF8"));
@@ -59,17 +70,5 @@ public class HandshakeRequest {
     out.writeByte(0);
     out.write(mechanismBytes);
     out.writeByte(0);
-  }
-
-  public static HandshakeRequest from(byte[] message) throws AuthenticationException {
-    String[] strings = new String(message, Charset.forName("UTF8")).split("\00");
-    if (strings.length > 0 && strings[0].equals(VERSION)) {
-      if (strings.length != 4) {
-        throw new AuthenticationException("Malformed handshake request.");
-      }
-      return new HandshakeRequest(strings[0], strings[1], strings[2], strings[3]);
-    } else {
-      throw new AuthenticationException("Unknown version number. Expected '" + VERSION + "'.");
-    }
   }
 }
