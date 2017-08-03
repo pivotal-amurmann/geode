@@ -67,10 +67,15 @@ public class GenericProtocolServerConnection extends ServerConnection {
       Socket socket = this.getSocket();
       InputStream inputStream = socket.getInputStream();
       OutputStream outputStream = socket.getOutputStream();
-//      if(!isAutenticated) {
-      this.authenticationService.process(inputStream, outputStream);
-//        return;
-//      }
+      if(!isAuthenticated) {
+        AuthenticationService.AuthenticationProgress authenticationProgress = this.authenticationService.process(inputStream, outputStream);
+        if (authenticationProgress == AuthenticationService.AuthenticationProgress.AUTHENTICATION_COMPLETE) {
+          isAuthenticated = true;
+        } else if (authenticationProgress == AuthenticationService.AuthenticationProgress.AUTHENTICATION_FAILED) {
+          this.setFlagProcessMessagesAsFalse(); // TODO: better shutdown.
+        } // else leave everything as is (AUTHENTICATION_IN_PROGRESS case)
+        return;
+      }
 //      authenticateClient(dataInputStream, dataOutputStream);
       messageHandler.receiveMessage(inputStream, outputStream, this.getCache());
     } catch (IOException e) {
