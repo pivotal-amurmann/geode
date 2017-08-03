@@ -80,7 +80,7 @@ public class RemoveRequestOperationHandlerJUnitTest extends OperationHandlerJUni
       CodecNotRegisteredForTypeException {
     RegionAPI.RemoveRequest removeRequest = generateTestRequest(false, false).getRemoveRequest();
     Result<RegionAPI.RemoveResponse> result =
-        operationHandler.process(serializationServiceStub, removeRequest, cacheStub);
+        operationHandler.process(serializationServiceStub, removeRequest, executionContext);
 
     assertTrue(result instanceof Success);
     verify(regionStub).remove(TEST_KEY);
@@ -92,7 +92,7 @@ public class RemoveRequestOperationHandlerJUnitTest extends OperationHandlerJUni
       CodecNotRegisteredForTypeException {
     RegionAPI.RemoveRequest removeRequest = generateTestRequest(true, false).getRemoveRequest();
     Result<RegionAPI.RemoveResponse> result =
-        operationHandler.process(serializationServiceStub, removeRequest, cacheStub);
+        operationHandler.process(serializationServiceStub, removeRequest, executionContext);
 
     assertTrue(result instanceof Failure);
     org.junit.Assert.assertThat(result.getErrorMessage().getMessage(),
@@ -105,7 +105,7 @@ public class RemoveRequestOperationHandlerJUnitTest extends OperationHandlerJUni
       CodecNotRegisteredForTypeException {
     RegionAPI.RemoveRequest removeRequest = generateTestRequest(false, true).getRemoveRequest();
     Result<RegionAPI.RemoveResponse> result =
-        operationHandler.process(serializationServiceStub, removeRequest, cacheStub);
+        operationHandler.process(serializationServiceStub, removeRequest, executionContext);
 
     assertTrue(result instanceof Success);
   }
@@ -121,7 +121,7 @@ public class RemoveRequestOperationHandlerJUnitTest extends OperationHandlerJUni
 
     RegionAPI.RemoveRequest removeRequest = generateTestRequest(false, false).getRemoveRequest();
     Result<RegionAPI.RemoveResponse> result =
-        operationHandler.process(serializationServiceStub, removeRequest, cacheStub);
+        operationHandler.process(serializationServiceStub, removeRequest, executionContext);
 
     assertTrue(result instanceof Failure);
     org.junit.Assert.assertEquals("Codec error in protobuf deserialization.",

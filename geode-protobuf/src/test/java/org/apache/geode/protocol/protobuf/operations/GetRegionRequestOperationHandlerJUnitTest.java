@@ -30,6 +30,7 @@ import org.apache.geode.cache.DataPolicy;
 import org.apache.geode.cache.Region;
 import org.apache.geode.cache.RegionAttributes;
 import org.apache.geode.cache.Scope;
+import org.apache.geode.internal.cache.tier.sockets.sasl.ExecutionContext;
 import org.apache.geode.protocol.MessageUtil;
 import org.apache.geode.protocol.protobuf.BasicTypes;
 import org.apache.geode.protocol.protobuf.ClientProtocol;
@@ -76,7 +77,7 @@ public class GetRegionRequestOperationHandlerJUnitTest extends OperationHandlerJ
 
 
     Result<RegionAPI.GetRegionResponse> result = operationHandler.process(serializationServiceStub,
-        MessageUtil.makeGetRegionRequest(TEST_REGION1), cacheStub);
+        MessageUtil.makeGetRegionRequest(TEST_REGION1), executionContext);
     RegionAPI.GetRegionResponse response = result.getMessage();
     BasicTypes.Region region = response.getRegion();
     Assert.assertEquals(TEST_REGION1, region.getName());
@@ -100,7 +101,7 @@ public class GetRegionRequestOperationHandlerJUnitTest extends OperationHandlerJ
         .thenReturn(Collections.unmodifiableSet(new HashSet<Region<String, String>>()));
     String unknownRegionName = "UNKNOWN_REGION";
     Result<RegionAPI.GetRegionResponse> result = operationHandler.process(serializationServiceStub,
-        MessageUtil.makeGetRegionRequest(unknownRegionName), emptyCache);
+        MessageUtil.makeGetRegionRequest(unknownRegionName), new ExecutionContext(emptyCache, authenticationContextStub));
     Assert.assertTrue(result instanceof Failure);
     Assert.assertEquals("No region exists for name: " + unknownRegionName,
         result.getErrorMessage().getMessage());

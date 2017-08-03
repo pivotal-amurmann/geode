@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 
 import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.Region;
+import org.apache.geode.internal.cache.tier.sockets.sasl.ExecutionContext;
 import org.apache.geode.protocol.operations.OperationHandler;
 import org.apache.geode.protocol.protobuf.ClientProtocol;
 import org.apache.geode.protocol.protobuf.Failure;
@@ -37,10 +38,10 @@ public class RemoveRequestOperationHandler
 
   @Override
   public Result<RegionAPI.RemoveResponse> process(SerializationService serializationService,
-      RegionAPI.RemoveRequest request, Cache cache) {
+      RegionAPI.RemoveRequest request, ExecutionContext executionContext) {
 
     String regionName = request.getRegionName();
-    Region region = cache.getRegion(regionName);
+    Region region = executionContext.getCache().getRegion(regionName);
     if (region == null) {
       return Failure
           .of(ClientProtocol.ErrorResponse.newBuilder().setMessage("Region not found").build());

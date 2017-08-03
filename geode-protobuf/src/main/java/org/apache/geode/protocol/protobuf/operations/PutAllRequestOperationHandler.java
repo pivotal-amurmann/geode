@@ -22,6 +22,7 @@ import org.apache.logging.log4j.Logger;
 
 import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.Region;
+import org.apache.geode.internal.cache.tier.sockets.sasl.ExecutionContext;
 import org.apache.geode.protocol.operations.OperationHandler;
 import org.apache.geode.protocol.protobuf.BasicTypes;
 import org.apache.geode.protocol.protobuf.Failure;
@@ -40,9 +41,9 @@ public class PutAllRequestOperationHandler
 
   @Override
   public Result<RegionAPI.PutAllResponse> process(SerializationService serializationService,
-      RegionAPI.PutAllRequest request, Cache cache) {
+      RegionAPI.PutAllRequest request, ExecutionContext executionContext) {
     String regionName = request.getRegionName();
-    Region region = cache.getRegion(regionName);
+    Region region = executionContext.getCache().getRegion(regionName);
 
     if (region == null) {
       return Failure.of(ProtobufResponseUtilities.createAndLogErrorResponse(

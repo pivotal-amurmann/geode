@@ -19,9 +19,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.apache.geode.cache.Cache;
 import org.apache.geode.internal.cache.InternalCache;
 import org.apache.geode.internal.cache.tier.sockets.ClientProtocolMessageHandler;
+import org.apache.geode.internal.cache.tier.sockets.sasl.ExecutionContext;
 import org.apache.geode.protocol.exception.InvalidProtocolMessageException;
 import org.apache.geode.protocol.protobuf.registry.OperationContextRegistry;
 import org.apache.geode.protocol.protobuf.serializer.ProtobufProtocolSerializer;
@@ -43,7 +43,8 @@ public class ProtobufStreamProcessor implements ClientProtocolMessageHandler {
         new OperationContextRegistry());
   }
 
-  public void processOneMessage(InputStream inputStream, OutputStream outputStream, Cache cache)
+  public void processOneMessage(InputStream inputStream, OutputStream outputStream,
+                                ExecutionContext executionContext)
       throws InvalidProtocolMessageException, IOException {
     ClientProtocol.Message message = protobufProtocolSerializer.deserialize(inputStream);
     if (message == null) {
@@ -51,7 +52,7 @@ public class ProtobufStreamProcessor implements ClientProtocolMessageHandler {
     }
 
     ClientProtocol.Request request = message.getRequest();
-    ClientProtocol.Response response = protobufOpsProcessor.process(request, cache);
+    ClientProtocol.Response response = protobufOpsProcessor.process(request, executionContext);
     ClientProtocol.MessageHeader responseHeader =
         ProtobufUtilities.createMessageHeaderForRequest(message);
     ClientProtocol.Message responseMessage =
@@ -61,9 +62,9 @@ public class ProtobufStreamProcessor implements ClientProtocolMessageHandler {
 
   @Override
   public void receiveMessage(InputStream inputStream, OutputStream outputStream,
-      InternalCache cache) throws IOException {
+                             ExecutionContext executionContext) throws IOException {
     try {
-      processOneMessage(inputStream, outputStream, cache);
+      processOneMessage(inputStream, outputStream, executionContext);
     } catch (InvalidProtocolMessageException e) {
       throw new IOException(e);
     }

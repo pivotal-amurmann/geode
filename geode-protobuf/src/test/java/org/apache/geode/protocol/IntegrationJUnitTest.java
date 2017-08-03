@@ -31,6 +31,7 @@ import org.junit.experimental.categories.Category;
 
 import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.Region;
+import org.apache.geode.internal.cache.tier.sockets.sasl.ExecutionContext;
 import org.apache.geode.protocol.protobuf.BasicTypes;
 import org.apache.geode.protocol.protobuf.ClientProtocol;
 import org.apache.geode.protocol.protobuf.EncodingTypeTranslator;
@@ -70,7 +71,7 @@ public class IntegrationJUnitTest {
 
     ProtobufStreamProcessor streamProcessor = new ProtobufStreamProcessor();
     streamProcessor.processOneMessage(getInputStream(getRequest(stringCodec)), outputStream,
-        cacheStub);
+        new ExecutionContext(cacheStub, null));
 
     RegionAPI.GetResponse getResponse = getGetResponse(outputStream);
 

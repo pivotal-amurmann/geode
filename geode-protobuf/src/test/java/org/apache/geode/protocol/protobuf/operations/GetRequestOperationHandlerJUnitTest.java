@@ -86,7 +86,7 @@ public class GetRequestOperationHandlerJUnitTest extends OperationHandlerJUnitTe
       CodecNotRegisteredForTypeException {
     RegionAPI.GetRequest getRequest = generateTestRequest(false, false, false);
     Result<RegionAPI.GetResponse> result =
-        operationHandler.process(serializationServiceStub, getRequest, cacheStub);
+        operationHandler.process(serializationServiceStub, getRequest, executionContext);
 
     Assert.assertTrue(result instanceof Success);
     Assert.assertEquals(BasicTypes.EncodingType.STRING,
@@ -102,7 +102,7 @@ public class GetRequestOperationHandlerJUnitTest extends OperationHandlerJUnitTe
       CodecNotRegisteredForTypeException {
     RegionAPI.GetRequest getRequest = generateTestRequest(true, false, false);
     Result<RegionAPI.GetResponse> response =
-        operationHandler.process(serializationServiceStub, getRequest, cacheStub);
+        operationHandler.process(serializationServiceStub, getRequest, executionContext);
 
     Assert.assertTrue(response instanceof Failure);
     Assert.assertEquals("Region not found", response.getErrorMessage().getMessage());
@@ -114,7 +114,7 @@ public class GetRequestOperationHandlerJUnitTest extends OperationHandlerJUnitTe
       CodecNotRegisteredForTypeException {
     RegionAPI.GetRequest getRequest = generateTestRequest(false, true, false);
     Result<RegionAPI.GetResponse> response =
-        operationHandler.process(serializationServiceStub, getRequest, cacheStub);
+        operationHandler.process(serializationServiceStub, getRequest, executionContext);
 
     Assert.assertTrue(response instanceof Success);
   }
@@ -125,7 +125,7 @@ public class GetRequestOperationHandlerJUnitTest extends OperationHandlerJUnitTe
       CodecNotRegisteredForTypeException {
     RegionAPI.GetRequest getRequest = generateTestRequest(false, false, true);
     Result<RegionAPI.GetResponse> response =
-        operationHandler.process(serializationServiceStub, getRequest, cacheStub);
+        operationHandler.process(serializationServiceStub, getRequest, executionContext);
 
     Assert.assertTrue(response instanceof Success);
   }
@@ -141,7 +141,7 @@ public class GetRequestOperationHandlerJUnitTest extends OperationHandlerJUnitTe
 
     RegionAPI.GetRequest getRequest = generateTestRequest(false, false, false);
     Result<RegionAPI.GetResponse> response =
-        operationHandler.process(serializationServiceStub, getRequest, cacheStub);
+        operationHandler.process(serializationServiceStub, getRequest, executionContext);
 
     Assert.assertTrue(response instanceof Failure);
     Assert.assertEquals("Codec error in protobuf deserialization.",
