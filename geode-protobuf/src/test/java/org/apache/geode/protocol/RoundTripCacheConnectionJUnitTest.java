@@ -43,6 +43,8 @@ import org.apache.geode.serialization.registry.exception.CodecAlreadyRegisteredF
 import org.apache.geode.serialization.registry.exception.CodecNotRegisteredForTypeException;
 import org.apache.geode.test.junit.categories.IntegrationTest;
 import org.apache.geode.util.test.TestUtil;
+
+import com.sun.deploy.util.SessionState;
 import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
@@ -54,6 +56,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Collection;
@@ -159,7 +162,7 @@ public class RoundTripCacheConnectionJUnitTest {
 
   @Test
   public void testNewProtocolHeaderLeadsToNewProtocolServerConnection() throws Exception {
-//    authenicateClient(socket, "secretsecret");
+    authenicateClient(socket, "secretsecret");
     ClientProtocol.Message putMessage =
         MessageUtil.makePutRequestMessage(serializationService, TEST_KEY, TEST_VALUE, TEST_REGION,
             ProtobufUtilities.createMessageHeader(TEST_PUT_CORRELATION_ID));
@@ -270,7 +273,7 @@ public class RoundTripCacheConnectionJUnitTest {
 
     ClientProtocol.Response response =
         deserializeResponse(socket, protobufProtocolSerializer, TEST_GET_CORRELATION_ID);
-    assertEquals(ClientProtocol.Response.ResponseAPICase.GETRESPONSE,
+    assertEquals(ClientProtocol.Response.ResponseAPICase.GET_RESPONSE,
         response.getResponseAPICase());
     RegionAPI.GetResponse getResponse = response.getGetResponse();
 
@@ -312,7 +315,7 @@ public class RoundTripCacheConnectionJUnitTest {
         protobufProtocolSerializer.deserialize(socket.getInputStream());
     assertEquals(ClientProtocol.Message.MessageTypeCase.RESPONSE, message.getMessageTypeCase());
     ClientProtocol.Response response = message.getResponse();
-    assertEquals(ClientProtocol.Response.ResponseAPICase.GETREGIONRESPONSE,
+    assertEquals(ClientProtocol.Response.ResponseAPICase.GET_REGION_RESPONSE,
         response.getResponseAPICase());
     RegionAPI.GetRegionResponse getRegionResponse = response.getGetRegionResponse();
     BasicTypes.Region region = getRegionResponse.getRegion();
@@ -348,13 +351,30 @@ public class RoundTripCacheConnectionJUnitTest {
             .getAuthenticationHandshakeResponse();
 
     assertEquals(mechanism, authenticationHandshakeResponse.getMechanism());
+
+    AuthenticationAPI.AuthenticationRequest.Builder
+        authenticationRequest =
+        AuthenticationAPI.AuthenticationRequest.newBuilder().addAuthenticationParam(
+            BasicTypes.EncodedValue.newBuilder().setStringResult("myId").build()
+        ).addAuthenticationParam(
+            BasicTypes.EncodedValue.newBuilder().setStringResult("bob").build()
+        ).addAuthenticationParam(
+            BasicTypes.EncodedValue.newBuilder().setStringResult("bobsPassword").build()
+        );
+
+    ClientProtocol.Message authenticationMessage = ClientProtocol.Message.newBuilder()
+        .setRequest(ClientProtocol.Request.newBuilder().setAuthenticationRequest(
+            authenticationRequest)
+        ).build();
+
+    protobufProtocolSerializer.serialize(authenticationMessage, outputStream);
   }
 
   private void validatePutResponse(Socket socket,
       ProtobufProtocolSerializer protobufProtocolSerializer) throws Exception {
     ClientProtocol.Response response =
         deserializeResponse(socket, protobufProtocolSerializer, TEST_PUT_CORRELATION_ID);
-    assertEquals(ClientProtocol.Response.ResponseAPICase.PUTRESPONSE,
+    assertEquals(ClientProtocol.Response.ResponseAPICase.PUT_RESPONSE,
         response.getResponseAPICase());
   }
 
@@ -365,7 +385,7 @@ public class RoundTripCacheConnectionJUnitTest {
     ClientProtocol.Response response =
         deserializeResponse(socket, protobufProtocolSerializer, TEST_GET_CORRELATION_ID);
 
-    assertEquals(ClientProtocol.Response.ResponseAPICase.GETRESPONSE,
+    assertEquals(ClientProtocol.Response.ResponseAPICase.GET_RESPONSE,
         response.getResponseAPICase());
     RegionAPI.GetResponse getResponse = response.getGetResponse();
     BasicTypes.EncodedValue result = getResponse.getResult();
@@ -389,7 +409,7 @@ public class RoundTripCacheConnectionJUnitTest {
     ClientProtocol.Response response =
         deserializeResponse(socket, protobufProtocolSerializer, correlationId);
 
-    assertEquals(ClientProtocol.Response.ResponseAPICase.GETREGIONNAMESRESPONSE,
+    assertEquals(ClientProtocol.Response.ResponseAPICase.GET_REGION_NAMES_RESPONSE,
         response.getResponseAPICase());
     RegionAPI.GetRegionNamesResponse getRegionsResponse = response.getGetRegionNamesResponse();
     assertEquals(1, getRegionsResponse.getRegionsCount());
@@ -402,7 +422,7 @@ public class RoundTripCacheConnectionJUnitTest {
     ClientProtocol.Response response =
         deserializeResponse(socket, protobufProtocolSerializer, TEST_PUT_CORRELATION_ID);
 
-    assertEquals(ClientProtocol.Response.ResponseAPICase.PUTALLRESPONSE,
+    assertEquals(ClientProtocol.Response.ResponseAPICase.PUT_ALL_RESPONSE,
         response.getResponseAPICase());
     assertEquals(expectedFailedKeys.size(), response.getPutAllResponse().getFailedKeysCount());
 
@@ -418,7 +438,7 @@ public class RoundTripCacheConnectionJUnitTest {
       CodecNotRegisteredForTypeException, CodecAlreadyRegisteredForTypeException {
     ClientProtocol.Response response =
         deserializeResponse(socket, protobufProtocolSerializer, TEST_GET_CORRELATION_ID);
-    assertEquals(ClientProtocol.Response.ResponseAPICase.GETALLRESPONSE,
+    assertEquals(ClientProtocol.Response.ResponseAPICase.GET_ALL_RESPONSE,
         response.getResponseAPICase());
     RegionAPI.GetAllResponse getAllResponse = response.getGetAllResponse();
     assertEquals(3, getAllResponse.getEntriesCount());
@@ -446,7 +466,7 @@ public class RoundTripCacheConnectionJUnitTest {
       ProtobufProtocolSerializer protobufProtocolSerializer) throws Exception {
     ClientProtocol.Response response =
         deserializeResponse(socket, protobufProtocolSerializer, TEST_REMOVE_CORRELATION_ID);
-    assertEquals(ClientProtocol.Response.ResponseAPICase.REMOVERESPONSE,
+    assertEquals(ClientProtocol.Response.ResponseAPICase.REMOVE_RESPONSE,
         response.getResponseAPICase());
   }
 

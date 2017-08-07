@@ -30,7 +30,7 @@ import org.apache.geode.internal.cache.tier.sockets.sasl.ExecutionContext;
 import org.apache.geode.test.junit.categories.UnitTest;
 
 @Category(UnitTest.class)
-public class ProtobufStreamProcessorTest {
+public class ProtobufStreamProcessorJUnitTest {
 
   @Test(expected = EOFException.class)
   public void receiveMessage() throws Exception {

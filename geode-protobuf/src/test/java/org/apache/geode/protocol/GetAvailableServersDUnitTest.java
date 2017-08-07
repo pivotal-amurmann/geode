@@ -87,7 +87,7 @@ public class GetAvailableServersDUnitTest extends JUnit4CacheTestCase {
       assertEquals(ClientProtocol.Message.MessageTypeCase.RESPONSE,
           getAvailableServersResponseMessage.getMessageTypeCase());
       ClientProtocol.Response messageResponse = getAvailableServersResponseMessage.getResponse();
-      assertEquals(ClientProtocol.Response.ResponseAPICase.GETAVAILABLESERVERSRESPONSE,
+      assertEquals(ClientProtocol.Response.ResponseAPICase.GET_AVAILABLE_SERVERS_RESPONSE,
           messageResponse.getResponseAPICase());
       ServerAPI.GetAvailableServersResponse getAvailableServersResponse =
           messageResponse.getGetAvailableServersResponse();

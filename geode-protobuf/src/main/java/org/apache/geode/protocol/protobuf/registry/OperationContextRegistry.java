@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.geode.protocol.protobuf.ClientProtocol;
 import org.apache.geode.protocol.protobuf.ClientProtocol.Request.RequestAPICase;
 import org.apache.geode.protocol.protobuf.OperationContext;
+import org.apache.geode.protocol.protobuf.operations.AuthenticationHandshakeRequestHandler;
 import org.apache.geode.protocol.protobuf.operations.GetAllRequestOperationHandler;
 import org.apache.geode.protocol.protobuf.operations.GetAvailableServersOperationHandler;
 import org.apache.geode.protocol.protobuf.operations.GetRegionNamesRequestOperationHandler;
@@ -42,42 +43,52 @@ public class OperationContextRegistry {
   }
 
   private void addContexts() {
-    operationContexts.put(RequestAPICase.GETREQUEST,
+    operationContexts.put(RequestAPICase.GET_REQUEST,
         new OperationContext<>(ClientProtocol.Request::getGetRequest,
             new GetRequestOperationHandler(),
             opsResp -> ClientProtocol.Response.newBuilder().setGetResponse(opsResp)));
 
-    operationContexts.put(RequestAPICase.GETALLREQUEST,
+    operationContexts.put(RequestAPICase.GET_ALL_REQUEST,
         new OperationContext<>(ClientProtocol.Request::getGetAllRequest,
             new GetAllRequestOperationHandler(),
             opsResp -> ClientProtocol.Response.newBuilder().setGetAllResponse(opsResp)));
 
-    operationContexts.put(RequestAPICase.PUTREQUEST,
+    operationContexts.put(RequestAPICase.PUT_REQUEST,
         new OperationContext<>(ClientProtocol.Request::getPutRequest,
             new PutRequestOperationHandler(),
             opsResp -> ClientProtocol.Response.newBuilder().setPutResponse(opsResp)));
 
-    operationContexts.put(RequestAPICase.PUTALLREQUEST,
+    operationContexts.put(RequestAPICase.PUT_ALL_REQUEST,
         new OperationContext<>(ClientProtocol.Request::getPutAllRequest,
             new PutAllRequestOperationHandler(),
             opsResp -> ClientProtocol.Response.newBuilder().setPutAllResponse(opsResp)));
 
-    operationContexts.put(RequestAPICase.REMOVEREQUEST,
+    operationContexts.put(RequestAPICase.REMOVE_REQUEST,
         new OperationContext<>(ClientProtocol.Request::getRemoveRequest,
             new RemoveRequestOperationHandler(),
             opsResp -> ClientProtocol.Response.newBuilder().setRemoveResponse(opsResp)));
 
-    operationContexts.put(RequestAPICase.GETREGIONNAMESREQUEST,
+    operationContexts.put(RequestAPICase.GET_REGION_NAMES_REQUEST,
         new OperationContext<>(ClientProtocol.Request::getGetRegionNamesRequest,
             new GetRegionNamesRequestOperationHandler(),
             opsResp -> ClientProtocol.Response.newBuilder().setGetRegionNamesResponse(opsResp)));
 
-    operationContexts.put(RequestAPICase.GETREGIONREQUEST,
+    operationContexts.put(RequestAPICase.GET_REGION_REQUEST,
         new OperationContext<>(ClientProtocol.Request::getGetRegionRequest,
             new GetRegionRequestOperationHandler(),
             opsResp -> ClientProtocol.Response.newBuilder().setGetRegionResponse(opsResp)));
 
-    operationContexts.put(RequestAPICase.GETAVAILABLESERVERSREQUEST, new OperationContext<>(
+    operationContexts.put(RequestAPICase.GET_AVAILABLE_SERVERS_REQUEST, new OperationContext<>(
+        ClientProtocol.Request::getGetAvailableServersRequest,
+        new GetAvailableServersOperationHandler(),
+        opsResp -> ClientProtocol.Response.newBuilder().setGetAvailableServersResponse(opsResp)));
+
+    operationContexts.put(RequestAPICase.AUTHENTICATION_HANDSHAKE_REQUEST, new OperationContext<>(
+        ClientProtocol.Request::getAuthenticationHandshakeRequest,
+        new AuthenticationHandshakeRequestHandler(),
+        opsResp -> ClientProtocol.Response.newBuilder().setAuthenticationHandshakeResponse(opsResp)));
+
+    operationContexts.put(RequestAPICase.AUTHENTICATION_REQUEST, new OperationContext<>(
         ClientProtocol.Request::getGetAvailableServersRequest,
         new GetAvailableServersOperationHandler(),
         opsResp -> ClientProtocol.Response.newBuilder().setGetAvailableServersResponse(opsResp)));

@@ -15,15 +15,13 @@
 
 package org.apache.geode.internal.cache.tier.sockets.sasl;
 
-import javax.security.sasl.SaslException;
+import java.io.IOException;
+
 import javax.security.sasl.SaslServer;
 
 import org.apache.logging.log4j.Logger;
 
 import org.apache.geode.internal.logging.LogService;
-import org.apache.geode.internal.security.SecurityService;
-
-import java.io.IOException;
 
 /**
  * SaslAuthenticator performs simple authentication using SASL

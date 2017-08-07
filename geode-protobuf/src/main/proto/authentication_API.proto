@@ -27,9 +27,14 @@ message AuthenticationHandshakeResponse {
 }
 
 message AuthenticationRequest {
-    repeated EncodedValue authenticationParams = 1;
+    repeated EncodedValue authenticationParam = 1;
 }
 
 message AuthenticationResponse {
-    repeated EncodedValue challengeParams = 1;
+    AuthenticationResult = 1;
+}
+
+enum AuthenticationResult {
+    SUCCESS = 0;
+    INVALID = 1;
 }

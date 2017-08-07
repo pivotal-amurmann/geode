@@ -23,6 +23,7 @@ import org.apache.geode.distributed.internal.InternalDistributedSystem;
 import org.apache.geode.distributed.internal.ServerLocation;
 import org.apache.geode.distributed.internal.tcpserver.TcpClient;
 import org.apache.geode.internal.admin.remote.DistributionLocatorId;
+import org.apache.geode.internal.cache.tier.sockets.sasl.ExecutionContext;
 import org.apache.geode.protocol.operations.OperationHandler;
 import org.apache.geode.protocol.protobuf.BasicTypes;
 import org.apache.geode.protocol.protobuf.Failure;
@@ -46,10 +47,10 @@ public class GetAvailableServersOperationHandler implements
   @Override
   public Result<ServerAPI.GetAvailableServersResponse> process(
       SerializationService serializationService, ServerAPI.GetAvailableServersRequest request,
-      Cache cache) {
+      ExecutionContext executionContext) {
 
     InternalDistributedSystem distributedSystem =
-        (InternalDistributedSystem) cache.getDistributedSystem();
+        (InternalDistributedSystem) executionContext.getCache().getDistributedSystem();
     Properties properties = distributedSystem.getProperties();
     String locatorsString = properties.getProperty(ConfigurationProperties.LOCATORS);
 

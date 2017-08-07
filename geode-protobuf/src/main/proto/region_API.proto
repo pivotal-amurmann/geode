@@ -63,31 +63,6 @@ message RemoveRequest {
 message RemoveResponse {
 }
 
-message RemoveAllRequest {
-    string regionName = 1;
-    repeated EncodedValue key = 2;
-}
-
-message RemoveAllResponse {
-    bool success = 1;
-}
-
-message CreateRegionRequest {
-    string regionName = 1;
-}
-
-message CreateRegionResponse {
-    bool success = 1;
-}
-
-message DestroyRegionRequest {
-    string regionName = 1;
-}
-
-message DestroyRegionResponse {
-    bool success = 1;
-}
-
 message GetRegionNamesRequest {
 
 }

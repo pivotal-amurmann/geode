@@ -38,49 +38,37 @@ message MessageHeader {
 message Request {
     CallbackArguments callbackArg = 1;
     oneof requestAPI {
-        PutRequest putRequest = 2;
-        GetRequest getRequest = 3;
-        PutAllRequest putAllRequest = 4;
-        GetAllRequest getAllRequest = 5;
-        RemoveRequest removeRequest = 6;
-        RemoveAllRequest removeAllRequest = 7;
+        PutRequest put_Request = 2;
+        GetRequest get_Request = 3;
+        PutAllRequest put_All_Request = 4;
+        GetAllRequest get_All_Request = 5;
+        RemoveRequest remove_Request = 6;
 
-        CreateRegionRequest createRegionRequest = 21;
-        DestroyRegionRequest destroyRegionRequest = 22;
+        GetAvailableServersRequest get_Available_Servers_Request = 42;
+        GetRegionNamesRequest get_Region_Names_Request = 43;
+        GetRegionRequest get_Region_Request = 44;
 
-//        PingRequest pingRequest = 41;
-        GetAvailableServersRequest getAvailableServersRequest = 42;
-        GetRegionNamesRequest getRegionNamesRequest = 43;
-        GetRegionRequest getRegionRequest = 44;
-
-        AuthenticationHandshakeRequest authenticationHandshakeRequest = 60;
-        AuthenticationRequest authenticationRequest = 61;
-
-
+        AuthenticationHandshakeRequest authentication_Handshake_Request = 60;
+        AuthenticationRequest authentication_Request = 61;
     }
 }
 
 message Response {
     oneof responseAPI {
-        PutResponse putResponse = 2;
-        GetResponse getResponse = 3;
-        PutAllResponse putAllResponse = 4;
-        GetAllResponse getAllResponse = 5;
-        RemoveResponse removeResponse = 6;
-        RemoveAllResponse removeAllResponse = 7;
+        PutResponse put_Response = 2;
+        GetResponse get_Response = 3;
+        PutAllResponse put_All_Response = 4;
+        GetAllResponse get_All_Response = 5;
+        RemoveResponse remove_Response = 6;
 
-        ErrorResponse errorResponse = 13;
+        ErrorResponse error_Response = 13;
 
-        CreateRegionResponse createRegionResponse = 20;
-        DestroyRegionResponse destroyRegionResponse = 21;
+        GetAvailableServersResponse get_Available_Servers_Response = 42;
+        GetRegionNamesResponse get_Region_Names_Response = 43;
+        GetRegionResponse get_Region_Response = 44;
 
-//        PingResponse pingResponse = 41;
-        GetAvailableServersResponse getAvailableServersResponse = 42;
-        GetRegionNamesResponse getRegionNamesResponse = 43;
-        GetRegionResponse getRegionResponse = 44;
-
-        AuthenticationHandshakeResponse authenticationHandshakeResponse = 60;
-        AuthenticationResponse authenticationResponse = 61;
+        AuthenticationHandshakeResponse authentication_Handshake_Response = 60;
+        AuthenticationResponse authentication_Response = 61;
     }
 }
 

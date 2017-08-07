@@ -80,7 +80,7 @@ public class GetAvailableServersOperationHandlerJUnitTest extends OperationHandl
     ServerAPI.GetAvailableServersRequest getAvailableServersRequest =
         ProtobufRequestUtilities.createGetAvailableServersRequest();
     Result operationHandlerResult =
-        operationHandler.process(serializationServiceStub, getAvailableServersRequest, cacheStub);
+        operationHandler.process(serializationServiceStub, getAvailableServersRequest, executionContext);
     assertTrue(operationHandlerResult instanceof Success);
     ValidateGetAvailableServersResponse(
         (GetAvailableServersResponse) operationHandlerResult.getMessage());
@@ -100,7 +100,7 @@ public class GetAvailableServersOperationHandlerJUnitTest extends OperationHandl
     ServerAPI.GetAvailableServersRequest getAvailableServersRequest =
         ProtobufRequestUtilities.createGetAvailableServersRequest();
     Result operationHandlerResult =
-        operationHandler.process(serializationServiceStub, getAvailableServersRequest, cacheStub);
+        operationHandler.process(serializationServiceStub, getAvailableServersRequest, executionContext);
     assertTrue(operationHandlerResult instanceof Success);
     ValidateGetAvailableServersResponse(
         (GetAvailableServersResponse) operationHandlerResult.getMessage());
@@ -125,7 +125,7 @@ public class GetAvailableServersOperationHandlerJUnitTest extends OperationHandl
     ServerAPI.GetAvailableServersRequest getAvailableServersRequest =
         ProtobufRequestUtilities.createGetAvailableServersRequest();
     Result operationHandlerResult =
-        operationHandler.process(serializationServiceStub, getAvailableServersRequest, cacheStub);
+        operationHandler.process(serializationServiceStub, getAvailableServersRequest, executionContext);
     assertTrue(operationHandlerResult instanceof Failure);
   }
 }
