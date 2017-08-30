@@ -116,7 +116,7 @@ public class RoundTripCacheConnectionJUnitTest {
   @Before
   public void setup() throws Exception {
     // Test names prefixed with useSSL_ will setup the cache and socket to use SSL transport
-    boolean useSSL = false;
+    boolean useSSL = testName.getMethodName().startsWith("useSSL_");
 
     Properties properties = new Properties();
     if (useSSL) {
@@ -131,7 +131,8 @@ public class RoundTripCacheConnectionJUnitTest {
 
     CacheServer cacheServer = cache.addCacheServer();
     int cacheServerPortOld = AvailablePortHelper.getRandomAvailableTCPPort();
-    cacheServerPortNetty = AvailablePortHelper.getRandomAvailableTCPPort();
+//    cacheServerPortNetty = AvailablePortHelper.getRandomAvailableTCPPort();
+    cacheServerPortNetty = 40405; // HACK
     cacheServer.setPort(cacheServerPortOld);
     cacheServer.start();
 
@@ -141,8 +142,8 @@ public class RoundTripCacheConnectionJUnitTest {
     System.setProperty("geode.feature-protobuf-protocol", "true");
 
     System.out.println("port 1: " + cacheServerPortNetty);
-    nettyServer = new NettyServer(cacheServerPortNetty, cache);
-    nettyServer.run();
+//    nettyServer = new NettyServer(cacheServerPortNetty, cache);
+//    nettyServer.run();
 
     if (useSSL) {
       socket = getSSLSocket();

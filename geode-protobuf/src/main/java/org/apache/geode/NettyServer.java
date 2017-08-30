@@ -1,8 +1,11 @@
 package org.apache.geode;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.net.ssl.SSLContext;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -22,10 +25,20 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.handler.ssl.OpenSslEngine;
+import io.netty.handler.ssl.OpenSslServerContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslHandler;
+import sun.security.ssl.SSLContextImpl;
+import sun.security.ssl.SSLEngineImpl;
 
 import org.apache.geode.cache.Cache;
+import org.apache.geode.internal.admin.SSLConfig;
+import org.apache.geode.internal.cache.CacheService;
 import org.apache.geode.internal.cache.tier.sockets.MessageExecutionContext;
+import org.apache.geode.internal.net.SocketCreator;
 import org.apache.geode.internal.protocol.protobuf.ClientProtocol;
+import org.apache.geode.management.internal.beans.CacheServiceMBeanBase;
 import org.apache.geode.protocol.protobuf.ProtobufOpsProcessor;
 import org.apache.geode.protocol.protobuf.ProtobufSerializationService;
 import org.apache.geode.protocol.protobuf.registry.OperationContextRegistry;
@@ -46,6 +59,7 @@ public class NettyServer {
    * The cache instance pointer on this vm
    */
   private final Cache cache;
+  private SSLConfig sslConfig;
 
   /**
    * Channel to be closed when shutting down
@@ -62,21 +76,21 @@ public class NettyServer {
   private int port;
   private final boolean singleThreadPerConnection = false;
 
-  public NettyServer(int port, Cache cache) {
+  public NettyServer(int port, Cache cache, SSLConfig sslConfig) {
     this.port = port;
     this.cache = cache;
+    this.sslConfig = sslConfig;
   }
 
-  public void run() throws Exception {
+  public void run() throws IOException, InterruptedException {
     try {
       startServer();
-      // Wait until the server socket is closed.
-      // In this example, this does not happen, but you can do that to gracefully
-      // shut down your server.
-//      serverChannel.closeFuture().sync();
+    } catch (Exception ex) {
     } finally {
-//      workerGroup.shutdownGracefully();
-//      bossGroup.shutdownGracefully();
+      if (!serverChannel.isOpen()) {
+        workerGroup.shutdownGracefully();
+        bossGroup.shutdownGracefully();
+      }
     }
   }
 
@@ -126,7 +140,9 @@ public class NettyServer {
         .childHandler(new ChannelInitializer<SocketChannel>() {
           @Override
           public void initChannel(SocketChannel ch) throws Exception {
-            MessageExecutionContext messageExecutionContext = new MessageExecutionContext(cache, new NoOpAuthorizer());
+            MessageExecutionContext
+                messageExecutionContext =
+                new MessageExecutionContext(cache, new NoOpAuthorizer());
             ProtobufOpsProcessor
                 protobufOpsProcessor =
                 new ProtobufOpsProcessor(new ProtobufSerializationService(),
@@ -134,21 +150,25 @@ public class NettyServer {
 
             ChannelPipeline pipeline = ch.pipeline();
 
+            // SSL
+
+            SslContextBuilder.forServer(sslConfig.getKeystore())
+            pipeline.addLast('ssl', ))
             // Decoder
             pipeline.addLast("frameDecoder",
                 new ProtobufVarint32FrameDecoder());
             pipeline.addLast("protobufDecoder",
                 new ProtobufDecoder(ClientProtocol.Message.getDefaultInstance()));
 
-           // pipeline.addLast("echo2", new EchoNettyChannelHandler());
-
+            // pipeline.addLast("echo2", new EchoNettyChannelHandler());
 
             // Encoder
             pipeline.addLast("frameEncoder", new ProtobufVarint32LengthFieldPrepender());
             pipeline.addLast("protobufEncoder", new ProtobufEncoder());
 //            pipeline.addLast("echo", new EchoNettyChannelHandler());
 
-            pipeline.addLast("protobufOpsHandler", new ProtobufOpsHandler(messageExecutionContext, protobufOpsProcessor));
+            pipeline.addLast("protobufOpsHandler",
+                new ProtobufOpsHandler(messageExecutionContext, protobufOpsProcessor));
           }
         }).option(ChannelOption.SO_REUSEADDR, true).option(ChannelOption.SO_RCVBUF, getBufferSize())
         .childOption(ChannelOption.SO_KEEPALIVE, true)
@@ -160,8 +180,31 @@ public class NettyServer {
     this.serverChannel = f.channel();
   }
 
+  private SSLContext makeSslEngine() {
+    SocketCreator socketCreator = new SocketCreator(sslConfig);
+    try {
+      SSLContext sslContext   = socketCreator.createAndConfigureSSLContext();
+      new SSLEngineImpl((SSLContextImpl) sslContext);
+    } catch (GeneralSecurityException | IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private int getBufferSize() {
     return 65000;
+  }
+
+  public void close() {
+    try {
+      ChannelFuture closed = serverChannel.close();
+      // shut down your server.
+      closed.sync();
+    } catch (InterruptedException ex) {
+      Thread.currentThread().interrupt();
+    } finally {
+      workerGroup.shutdownGracefully();
+      bossGroup.shutdownGracefully();
+    }
   }
 
 //  public static void main(String[] args) throws Exception {
@@ -173,4 +216,4 @@ public class NettyServer {
 //    }
 //    new NettyServer(port).run();
 //  }
-}
+  }

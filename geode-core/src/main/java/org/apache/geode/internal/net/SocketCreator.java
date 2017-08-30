@@ -389,7 +389,7 @@ public class SocketCreator {
    * @throws GeneralSecurityException if security information can not be found
    * @throws IOException if information can not be loaded
    */
-  private SSLContext createAndConfigureSSLContext() throws GeneralSecurityException, IOException {
+  public SSLContext createAndConfigureSSLContext() throws GeneralSecurityException, IOException {
 
     SSLContext newSSLContext = getSSLContextInstance();
     KeyManager[] keyManagers = getKeyManagers();

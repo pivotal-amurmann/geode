@@ -43,4 +43,6 @@ public interface CacheService {
    * @return the MBean associated with this server
    */
   public CacheServiceMBeanBase getMBean();
+
+  default void close() {};
 }

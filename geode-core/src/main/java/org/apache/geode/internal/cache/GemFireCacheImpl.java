@@ -2409,6 +2409,8 @@ public class GemFireCacheImpl implements InternalCache, InternalClientCache, Has
 
     } // static synchronization on GemFireCache.class
 
+    for (CacheService service : this.getServices())
+      service.close();
   }
 
   private void closeOffHeapEvictor() {
