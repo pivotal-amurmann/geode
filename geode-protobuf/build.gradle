@@ -37,6 +37,8 @@ dependencies {
     testCompile 'org.powermock:powermock-api-mockito:' + project.'powermock.version'
 
     compile 'com.google.protobuf:protobuf-java:' + project.'protobuf-java.version'
+
+    compile 'io.netty:netty-all:' + project.'netty-all.version'
 }
 
 protobuf {

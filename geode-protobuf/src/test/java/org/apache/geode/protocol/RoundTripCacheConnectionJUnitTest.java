@@ -46,6 +46,7 @@ import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 
+import org.apache.geode.NettyServer;
 import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.CacheFactory;
 import org.apache.geode.cache.DataPolicy;
@@ -110,43 +111,47 @@ public class RoundTripCacheConnectionJUnitTest {
 
   @Rule
   public TestName testName = new TestName();
+  private NettyServer nettyServer;
 
   @Before
   public void setup() throws Exception {
     // Test names prefixed with useSSL_ will setup the cache and socket to use SSL transport
-    boolean useSSL = testName.getMethodName().startsWith("useSSL_");
+    boolean useSSL = false;
 
     Properties properties = new Properties();
     if (useSSL) {
       updatePropertiesForSSLCache(properties);
     }
-
-    CacheFactory cacheFactory = new CacheFactory(properties);
-    cacheFactory.set(ConfigurationProperties.MCAST_PORT, "0");
-    cacheFactory.set(ConfigurationProperties.ENABLE_CLUSTER_CONFIGURATION, "false");
-    cacheFactory.set(ConfigurationProperties.USE_CLUSTER_CONFIGURATION, "false");
-    cache = cacheFactory.create();
-
-    CacheServer cacheServer = cache.addCacheServer();
-    cacheServerPort = AvailablePortHelper.getRandomAvailableTCPPort();
-    cacheServer.setPort(cacheServerPort);
-    cacheServer.start();
-
-    RegionFactory<Object, Object> regionFactory = cache.createRegionFactory();
-    regionFactory.create(TEST_REGION);
+//
+//    CacheFactory cacheFactory = new CacheFactory(properties);
+//    cacheFactory.set(ConfigurationProperties.MCAST_PORT, "0");
+//    cacheFactory.set(ConfigurationProperties.ENABLE_CLUSTER_CONFIGURATION, "false");
+//    cacheFactory.set(ConfigurationProperties.USE_CLUSTER_CONFIGURATION, "false");
+//    //cache = cacheFactory.create();
+//
+//    CacheServer cacheServer = cache.addCacheServer();
+//    cacheServerPort = AvailablePortHelper.getRandomAvailableTCPPort();
+//    cacheServer.setPort(cacheServerPort);
+//    //cacheServer.start();
+//
+//    RegionFactory<Object, Object> regionFactory = cache.createRegionFactory();
+//    regionFactory.create(TEST_REGION);
 
     System.setProperty("geode.feature-protobuf-protocol", "true");
+
+    nettyServer = new NettyServer(40405);
+    nettyServer.run();
 
     if (useSSL) {
       socket = getSSLSocket();
     } else {
-      socket = new Socket("localhost", cacheServerPort);
+      socket = new Socket("localhost", 40405);
     }
     Awaitility.await().atMost(5, TimeUnit.SECONDS).until(socket::isConnected);
     outputStream = socket.getOutputStream();
-    outputStream.write(110);
 
     serializationService = new ProtobufSerializationService();
+
   }
 
   @After
@@ -168,7 +173,7 @@ public class RoundTripCacheConnectionJUnitTest {
     ClientProtocol.Message getMessage = MessageUtil.makeGetRequestMessage(serializationService,
         TEST_KEY, TEST_REGION, ProtobufUtilities.createMessageHeader(TEST_GET_CORRELATION_ID));
     protobufProtocolSerializer.serialize(getMessage, outputStream);
-    validateGetResponse(socket, protobufProtocolSerializer, TEST_VALUE);
+    validateGetResponse(socket, protobufProtocolSerializer, TEST_REGION);
   }
 
   @Test
