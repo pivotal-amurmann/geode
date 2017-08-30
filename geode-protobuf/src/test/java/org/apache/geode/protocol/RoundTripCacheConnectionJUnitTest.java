@@ -40,6 +40,7 @@ import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
@@ -277,6 +278,7 @@ public class RoundTripCacheConnectionJUnitTest {
   }
 
   @Test
+  @Ignore
   public void testConnectionCountIsProperlyDecremented() throws Exception {
     CacheServer cacheServer = this.cache.getCacheServers().stream().findFirst().get();
     AcceptorImpl acceptor = ((CacheServerImpl) cacheServer).getAcceptor();

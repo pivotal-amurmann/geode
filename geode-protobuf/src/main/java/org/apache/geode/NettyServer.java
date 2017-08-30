@@ -6,6 +6,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -152,8 +153,8 @@ public class NettyServer {
 
             // SSL
 
-            SslContextBuilder.forServer(sslConfig.getKeystore())
-            pipeline.addLast('ssl', ))
+            if(sslConfig.isEnabled())
+              pipeline.addLast("ssl", new SslHandler(makeSslEngine()));
             // Decoder
             pipeline.addLast("frameDecoder",
                 new ProtobufVarint32FrameDecoder());
@@ -180,11 +181,13 @@ public class NettyServer {
     this.serverChannel = f.channel();
   }
 
-  private SSLContext makeSslEngine() {
+  private SSLEngine makeSslEngine() {
     SocketCreator socketCreator = new SocketCreator(sslConfig);
     try {
       SSLContext sslContext   = socketCreator.createAndConfigureSSLContext();
-      new SSLEngineImpl((SSLContextImpl) sslContext);
+      SSLEngine sslEngine = sslContext.createSSLEngine();
+      sslEngine.setUseClientMode(false);
+      return sslEngine;
     } catch (GeneralSecurityException | IOException e) {
       throw new RuntimeException(e);
     }
