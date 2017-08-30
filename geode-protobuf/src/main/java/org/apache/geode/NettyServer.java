@@ -1,19 +1,13 @@
 package org.apache.geode;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.netty.bootstrap.ServerBootstrap;
-
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
@@ -24,35 +18,20 @@ import io.netty.channel.oio.OioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.oio.OioServerSocketChannel;
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 
 import org.apache.geode.cache.Cache;
-import org.apache.geode.distributed.internal.InternalDistributedSystem;
+import org.apache.geode.internal.cache.tier.sockets.MessageExecutionContext;
 import org.apache.geode.internal.protocol.protobuf.ClientProtocol;
-import org.apache.geode.redis.GeodeRedisServer;
-import org.apache.geode.redis.internal.ByteToCommandDecoder;
-import org.apache.geode.redis.internal.Coder;
-import org.apache.geode.redis.internal.ExecutionHandlerContext;
+import org.apache.geode.protocol.protobuf.ProtobufOpsProcessor;
+import org.apache.geode.protocol.protobuf.ProtobufSerializationService;
+import org.apache.geode.protocol.protobuf.registry.OperationContextRegistry;
+import org.apache.geode.security.server.NoOpAuthorizer;
 
-/**
- * Discards any incoming data.
- */
 public class NettyServer {
-  /**
-   * Thread used to start main method
-   */
-  private static Thread mainThread = null;
-
-  /**
-   * The default Redis port as specified by their protocol, {@code DEFAULT_REDIS_SERVER_PORT}
-   */
-  public static final int DEFAULT_REDIS_SERVER_PORT = 6379;
-
   /**
    * The number of threads that will work on handling requests
    */
@@ -64,24 +43,9 @@ public class NettyServer {
   private final int numSelectorThreads = 16;
 
   /**
-   * The actual port being used by the server
-   */
-  private final int serverPort = 40405;
-
-  /**
-   * Connection timeout in milliseconds
-   */
-  private static final int connectTimeoutMillis = 1000;
-
-  /**
-   * Temporary constant whether to use old single thread per connection model for worker group
-   */
-  private boolean singleThreadPerConnection;
-
-  /**
    * The cache instance pointer on this vm
    */
-  private Cache cache;
+  private final Cache cache;
 
   /**
    * Channel to be closed when shutting down
@@ -96,9 +60,11 @@ public class NettyServer {
   private boolean started;
 
   private int port;
+  private final boolean singleThreadPerConnection = false;
 
-  public NettyServer(int port) {
+  public NettyServer(int port, Cache cache) {
     this.port = port;
+    this.cache = cache;
   }
 
   public void run() throws Exception {
@@ -160,6 +126,12 @@ public class NettyServer {
         .childHandler(new ChannelInitializer<SocketChannel>() {
           @Override
           public void initChannel(SocketChannel ch) throws Exception {
+            MessageExecutionContext messageExecutionContext = new MessageExecutionContext(cache, new NoOpAuthorizer());
+            ProtobufOpsProcessor
+                protobufOpsProcessor =
+                new ProtobufOpsProcessor(new ProtobufSerializationService(),
+                    new OperationContextRegistry());
+
             ChannelPipeline pipeline = ch.pipeline();
 
             // Decoder
@@ -174,9 +146,9 @@ public class NettyServer {
             // Encoder
             pipeline.addLast("frameEncoder", new ProtobufVarint32LengthFieldPrepender());
             pipeline.addLast("protobufEncoder", new ProtobufEncoder());
-            pipeline.addLast("echo", new EchoNettyChannelHandler());
+//            pipeline.addLast("echo", new EchoNettyChannelHandler());
 
-
+            pipeline.addLast("protobufOpsHandler", new ProtobufOpsHandler(messageExecutionContext, protobufOpsProcessor));
           }
         }).option(ChannelOption.SO_REUSEADDR, true).option(ChannelOption.SO_RCVBUF, getBufferSize())
         .childOption(ChannelOption.SO_KEEPALIVE, true)
@@ -184,7 +156,7 @@ public class NettyServer {
         .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
 
     // Bind and start to accept incoming connections.
-    ChannelFuture f = b.bind(serverPort).sync();
+    ChannelFuture f = b.bind(port).sync();
     this.serverChannel = f.channel();
   }
 
@@ -192,13 +164,13 @@ public class NettyServer {
     return 65000;
   }
 
-  public static void main(String[] args) throws Exception {
-    int port;
-    if (args.length > 0) {
-      port = Integer.parseInt(args[0]);
-    } else {
-      port = 8080;
-    }
-    new NettyServer(port).run();
-  }
+//  public static void main(String[] args) throws Exception {
+//    int port;
+//    if (args.length > 0) {
+//      port = Integer.parseInt(args[0]);
+//    } else {
+//      port = 8080;
+//    }
+//    new NettyServer(port).run();
+//  }
 }

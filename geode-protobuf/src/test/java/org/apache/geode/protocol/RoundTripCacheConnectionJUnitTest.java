@@ -101,7 +101,7 @@ public class RoundTripCacheConnectionJUnitTest {
   private final String TEST_MULTIOP_VALUE3 = "multiopValue3";
 
   private Cache cache;
-  private int cacheServerPort;
+  private int cacheServerPortNetty;
   private SerializationService serializationService;
   private Socket socket;
   private OutputStream outputStream;
@@ -122,30 +122,32 @@ public class RoundTripCacheConnectionJUnitTest {
     if (useSSL) {
       updatePropertiesForSSLCache(properties);
     }
-//
-//    CacheFactory cacheFactory = new CacheFactory(properties);
-//    cacheFactory.set(ConfigurationProperties.MCAST_PORT, "0");
-//    cacheFactory.set(ConfigurationProperties.ENABLE_CLUSTER_CONFIGURATION, "false");
-//    cacheFactory.set(ConfigurationProperties.USE_CLUSTER_CONFIGURATION, "false");
-//    //cache = cacheFactory.create();
-//
-//    CacheServer cacheServer = cache.addCacheServer();
-//    cacheServerPort = AvailablePortHelper.getRandomAvailableTCPPort();
-//    cacheServer.setPort(cacheServerPort);
-//    //cacheServer.start();
-//
-//    RegionFactory<Object, Object> regionFactory = cache.createRegionFactory();
-//    regionFactory.create(TEST_REGION);
+
+    CacheFactory cacheFactory = new CacheFactory(properties);
+    cacheFactory.set(ConfigurationProperties.MCAST_PORT, "0");
+    cacheFactory.set(ConfigurationProperties.ENABLE_CLUSTER_CONFIGURATION, "false");
+    cacheFactory.set(ConfigurationProperties.USE_CLUSTER_CONFIGURATION, "false");
+    cache = cacheFactory.create();
+
+    CacheServer cacheServer = cache.addCacheServer();
+    int cacheServerPortOld = AvailablePortHelper.getRandomAvailableTCPPort();
+    cacheServerPortNetty = AvailablePortHelper.getRandomAvailableTCPPort();
+    cacheServer.setPort(cacheServerPortOld);
+    cacheServer.start();
+
+    RegionFactory<Object, Object> regionFactory = cache.createRegionFactory();
+    regionFactory.create(TEST_REGION);
 
     System.setProperty("geode.feature-protobuf-protocol", "true");
 
-    nettyServer = new NettyServer(40405);
+    System.out.println("port 1: " + cacheServerPortNetty);
+    nettyServer = new NettyServer(cacheServerPortNetty, cache);
     nettyServer.run();
 
     if (useSSL) {
       socket = getSSLSocket();
     } else {
-      socket = new Socket("localhost", 40405);
+      socket = new Socket("localhost", cacheServerPortNetty);
     }
     Awaitility.await().atMost(5, TimeUnit.SECONDS).until(socket::isConnected);
     outputStream = socket.getOutputStream();
@@ -173,17 +175,13 @@ public class RoundTripCacheConnectionJUnitTest {
     ClientProtocol.Message getMessage = MessageUtil.makeGetRequestMessage(serializationService,
         TEST_KEY, TEST_REGION, ProtobufUtilities.createMessageHeader(TEST_GET_CORRELATION_ID));
     protobufProtocolSerializer.serialize(getMessage, outputStream);
-    validateGetResponse(socket, protobufProtocolSerializer, TEST_REGION);
+    validateGetResponse(socket, protobufProtocolSerializer, TEST_VALUE);
   }
 
   @Test
   public void testNewProtocolWithMultikeyOperations() throws Exception {
-    System.setProperty("geode.feature-protobuf-protocol", "true");
-
-    Socket socket = new Socket("localhost", cacheServerPort);
     Awaitility.await().atMost(5, TimeUnit.SECONDS).until(socket::isConnected);
     OutputStream outputStream = socket.getOutputStream();
-    outputStream.write(110);
 
     ProtobufProtocolSerializer protobufProtocolSerializer = new ProtobufProtocolSerializer();
     Set<BasicTypes.Entry> putEntries = new HashSet<>();
@@ -222,10 +220,9 @@ public class RoundTripCacheConnectionJUnitTest {
     regionFactory.create(regionName);
     System.setProperty("geode.feature-protobuf-protocol", "true");
 
-    Socket socket = new Socket("localhost", cacheServerPort);
+    Socket socket = new Socket("localhost", cacheServerPortNetty);
     Awaitility.await().atMost(5, TimeUnit.SECONDS).until(socket::isConnected);
     OutputStream outputStream = socket.getOutputStream();
-    outputStream.write(110);
 
     ProtobufProtocolSerializer protobufProtocolSerializer = new ProtobufProtocolSerializer();
     Set<BasicTypes.Entry> putEntries = new HashSet<>();
@@ -318,10 +315,9 @@ public class RoundTripCacheConnectionJUnitTest {
   public void testNewProtocolGetRegionCallSucceeds() throws Exception {
     System.setProperty("geode.feature-protobuf-protocol", "true");
 
-    Socket socket = new Socket("localhost", cacheServerPort);
+    Socket socket = new Socket("localhost", cacheServerPortNetty);
     Awaitility.await().atMost(5, TimeUnit.SECONDS).until(socket::isConnected);
     OutputStream outputStream = socket.getOutputStream();
-    outputStream.write(110);
 
     ProtobufProtocolSerializer protobufProtocolSerializer = new ProtobufProtocolSerializer();
     ClientProtocol.Message getRegionMessage = MessageUtil.makeGetRegionRequestMessage(TEST_REGION,
@@ -481,7 +477,7 @@ public class RoundTripCacheConnectionJUnitTest {
     sslConfig.setKeystorePassword("password");
 
     SocketCreator socketCreator = new SocketCreator(sslConfig);
-    return socketCreator.connectForClient("localhost", cacheServerPort, 5000);
+    return socketCreator.connectForClient("localhost", cacheServerPortNetty, 5000);
   }
 
 
