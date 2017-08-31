@@ -133,9 +133,6 @@ public class NettyServer {
       workerGroup = new NioEventLoopGroup(this.numWorkerThreads, workerThreadFactory);
       socketClass = NioServerSocketChannel.class;
     }
-//    InternalDistributedSystem system = (InternalDistributedSystem) cache.getDistributedSystem();
-//    String pwd = system.getConfig().getRedisPassword();
-//    final byte[] pwdB = Coder.stringToBytes(pwd);
     ServerBootstrap b = new ServerBootstrap();
     b.group(bossGroup, workerGroup).channel(socketClass)
         .childHandler(new ChannelInitializer<SocketChannel>() {
@@ -152,22 +149,20 @@ public class NettyServer {
             ChannelPipeline pipeline = ch.pipeline();
 
             // SSL
-
             if(sslConfig.isEnabled())
               pipeline.addLast("ssl", new SslHandler(makeSslEngine()));
+
             // Decoder
             pipeline.addLast("frameDecoder",
                 new ProtobufVarint32FrameDecoder());
             pipeline.addLast("protobufDecoder",
                 new ProtobufDecoder(ClientProtocol.Message.getDefaultInstance()));
 
-            // pipeline.addLast("echo2", new EchoNettyChannelHandler());
-
             // Encoder
             pipeline.addLast("frameEncoder", new ProtobufVarint32LengthFieldPrepender());
             pipeline.addLast("protobufEncoder", new ProtobufEncoder());
-//            pipeline.addLast("echo", new EchoNettyChannelHandler());
 
+            // Business Logic
             pipeline.addLast("protobufOpsHandler",
                 new ProtobufOpsHandler(messageExecutionContext, protobufOpsProcessor));
           }
