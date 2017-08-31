@@ -482,6 +482,4 @@ public class RoundTripCacheConnectionJUnitTest {
     SocketCreator socketCreator = new SocketCreator(sslConfig);
     return socketCreator.connectForClient("localhost", cacheServerPortNetty, 5000);
   }
-
-
 }

@@ -25,7 +25,8 @@ public class NettyService implements CacheService {
         sslConfig =
         SSLConfigurationFactory.getSSLConfigForComponent(distributionConfig,
             SecurableCommunicationChannel.SERVER);
-    int port = 40405;//TODO HACK FIXME
+    int port = Integer.getInteger("nettyPort", 40405);
+
     nettyServer = new NettyServer(port, cache, sslConfig);
     try {
       nettyServer.run();

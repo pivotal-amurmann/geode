@@ -78,6 +78,7 @@ public class NettyServer {
   private final boolean singleThreadPerConnection = false;
 
   public NettyServer(int port, Cache cache, SSLConfig sslConfig) {
+    Thread.dumpStack();
     this.port = port;
     this.cache = cache;
     this.sslConfig = sslConfig;
@@ -87,6 +88,7 @@ public class NettyServer {
     try {
       startServer();
     } catch (Exception ex) {
+      ex.printStackTrace();
     } finally {
       if (!serverChannel.isOpen()) {
         workerGroup.shutdownGracefully();
