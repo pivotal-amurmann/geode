@@ -58,22 +58,22 @@ public class ProtobufPerformanceDUnitTest extends JUnit4CacheTestCase {
 
   @Test
   public void perfTest() throws Exception {
-
+    boolean useSSL = false;
     Host host = Host.getHost(0);
     VM server1 = host.getVM(2);
 
-    server1.invoke(() -> startCache());
+    server1.invoke(() -> startCache(useSSL));
     serializationService = new ProtobufSerializationService();
 
     ArrayList<Socket> connections = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
-      connections.add(initConnection(true));
+      connections.add(initConnection(useSSL));
     }
 
     long startTime = System.currentTimeMillis();
 
     List<Object> objectList = connections.parallelStream().map((sock) -> {
-      int nputs = 5_000;
+      int nputs = 10_000;
       byte[] value = new byte[100];
       for (int i = 0; i < nputs; i++) {
         try {
@@ -124,10 +124,11 @@ public class ProtobufPerformanceDUnitTest extends JUnit4CacheTestCase {
     return message.getResponse();
   }
 
-  private void startCache() throws Exception {
+  private void startCache(boolean useSSL) throws Exception {
     System.setProperty("nettyPort", String.valueOf(cacheServerPortNetty));
     Properties properties = new Properties();
-    updatePropertiesForSSLCache(properties);
+    if (useSSL)
+      updatePropertiesForSSLCache(properties);
 
     CacheFactory cacheFactory = new CacheFactory(properties);
     cacheFactory.set(ConfigurationProperties.MCAST_PORT, "0");
