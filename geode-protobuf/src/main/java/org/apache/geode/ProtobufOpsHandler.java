@@ -21,6 +21,10 @@ public class ProtobufOpsHandler extends ChannelInboundHandlerAdapter {
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
     ClientProtocol.Message message = (ClientProtocol.Message) msg;
 
+//    System.out.println(
+//        "ops handler Thread.currentThread().getName() = " + Thread
+//            .currentThread().getName() + "+ Thread.currentThread().getID() = " + Thread.currentThread().getId());
+
     ClientProtocol.Response
         response =
         protobufOpsProcessor.process(message.getRequest(), executionContext);

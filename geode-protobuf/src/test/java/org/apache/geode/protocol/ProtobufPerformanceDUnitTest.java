@@ -9,11 +9,15 @@ import static org.apache.geode.distributed.ConfigurationProperties.SSL_TRUSTSTOR
 import static org.apache.geode.distributed.ConfigurationProperties.SSL_TRUSTSTORE_PASSWORD;
 import static org.junit.Assert.assertEquals;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.junit.Test;
@@ -54,25 +58,41 @@ public class ProtobufPerformanceDUnitTest extends JUnit4CacheTestCase {
 
   @Test
   public void perfTest() throws Exception {
+
     Host host = Host.getHost(0);
     VM server1 = host.getVM(2);
 
     server1.invoke(() -> startCache());
+    serializationService = new ProtobufSerializationService();
 
-    initLatestProtobuf(true);
-
-    int nputs = 1000000;
-    byte[] value = new byte[100];
-    long startTime = System.currentTimeMillis();
-    for (int i = 0; i < nputs; i++) {
-      makePut(1, value);
+    ArrayList<Socket> connections = new ArrayList<>();
+    for (int i = 0; i < 100; i++) {
+      connections.add(initConnection(true));
     }
+
+    long startTime = System.currentTimeMillis();
+
+    List<Object> objectList = connections.parallelStream().map((sock) -> {
+      int nputs = 5_000;
+      byte[] value = new byte[100];
+      for (int i = 0; i < nputs; i++) {
+        try {
+          makePut(i, value, sock);
+        } catch (Exception e) {
+          System.out.println("===> Oh no!" + e);
+        }
+      }
+      return null;
+    }).collect(Collectors.toList());
+    System.out.println("===>" + objectList.size());
+//    int nputs = 1_000_000;
+
     long endTime = System.currentTimeMillis();
 
     System.out.println("===> perf time " + (endTime - startTime));
   }
 
-  private void makePut(int key, byte[] value)
+  private void makePut(int key, byte[] value, Socket socket)
       throws Exception {
     ProtobufProtocolSerializer protobufProtocolSerializer = new ProtobufProtocolSerializer();
     ClientProtocol.Message putMessage =
@@ -80,7 +100,7 @@ public class ProtobufPerformanceDUnitTest extends JUnit4CacheTestCase {
             .makePutRequestMessage(serializationService, String.valueOf(key), String.valueOf(value),
                 TEST_REGION,
                 ProtobufUtilities.createMessageHeader(2));
-    protobufProtocolSerializer.serialize(putMessage, outputStream);
+    protobufProtocolSerializer.serialize(putMessage, socket.getOutputStream());
     validatePutResponse(socket, protobufProtocolSerializer);
   }
 
@@ -133,18 +153,17 @@ public class ProtobufPerformanceDUnitTest extends JUnit4CacheTestCase {
 
   }
 
-  private void initLatestProtobuf(boolean useSSL) throws Exception {
+  private Socket initConnection(boolean useSSL) throws Exception {
+    Socket socket;
     if(useSSL) {
-      socket = getSSLSocket(cacheServerPortOld);
+      socket = getSSLSocket(cacheServerPortNetty);
     } else {
-      socket = new Socket("localhost", cacheServerPortOld);
+      socket = new Socket("localhost", cacheServerPortNetty);
 
     }
     Awaitility.await().atMost(5, TimeUnit.SECONDS).until(socket::isConnected);
-    outputStream = socket.getOutputStream();
-    outputStream.write(110);
-
-    serializationService = new ProtobufSerializationService();
+//    outputStream.write(110);
+    return socket;
   }
 
   private Socket getSSLSocket(int port) throws IOException {

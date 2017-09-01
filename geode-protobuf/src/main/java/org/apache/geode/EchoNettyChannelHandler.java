@@ -9,13 +9,13 @@ import org.apache.geode.internal.protocol.protobuf.RegionAPI;
 public class EchoNettyChannelHandler extends ChannelInboundHandlerAdapter {
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-    ClientProtocol.Message message = (ClientProtocol.Message) msg;
-    String regionName = message.getRequest().getPutRequest().getRegionName();
-    System.out.println("===> regionName: " + regionName);
-    ClientProtocol.Response.Builder response = ClientProtocol.Response.newBuilder().setPutResponse(
-        RegionAPI.PutResponse.newBuilder()
-            .getDefaultInstanceForType());
-    ctx.write(response);
+    System.out.println(
+        "Thread.currentThread().getName() = " + Thread
+            .currentThread().getName() + "+ Thread.currentThread().getID() = " + Thread.currentThread().getId());
+
+
+    ctx.fireChannelRead(msg);
+    ctx.flush();
   }
 
   @Override

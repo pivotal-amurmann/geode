@@ -78,7 +78,6 @@ public class NettyServer {
   private final boolean singleThreadPerConnection = false;
 
   public NettyServer(int port, Cache cache, SSLConfig sslConfig) {
-    Thread.dumpStack();
     this.port = port;
     this.cache = cache;
     this.sslConfig = sslConfig;
@@ -159,13 +158,14 @@ public class NettyServer {
                 new ProtobufVarint32FrameDecoder());
             pipeline.addLast("protobufDecoder",
                 new ProtobufDecoder(ClientProtocol.Message.getDefaultInstance()));
+//            pipeline.addLast("echo1", new EchoNettyChannelHandler());
 
             // Encoder
             pipeline.addLast("frameEncoder", new ProtobufVarint32LengthFieldPrepender());
             pipeline.addLast("protobufEncoder", new ProtobufEncoder());
 
             // Business Logic
-            pipeline.addLast("protobufOpsHandler",
+            pipeline.addLast(workerGroup,"protobufOpsHandler",
                 new ProtobufOpsHandler(messageExecutionContext, protobufOpsProcessor));
           }
         }).option(ChannelOption.SO_REUSEADDR, true).option(ChannelOption.SO_RCVBUF, getBufferSize())
