@@ -4,5 +4,5 @@ engines:
     enabled: true
 ratings:
   paths:
-  - "**.java"
+  - "**/**.java"
 exclude_paths: []
