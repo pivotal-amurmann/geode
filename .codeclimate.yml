@@ -3,10 +3,7 @@ engines:
   pmd:
     enabled: true
     config:
-      rules:
-        - "java-basic"
-#        - "java-code-size"
-        - "java-coupling"
+      file: pmd-rules.xml
 ratings:
   paths:
   - "**/**.java"
