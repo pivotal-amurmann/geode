@@ -8,9 +8,9 @@
     <rule ref="rulesets/java/basic.xml"/>
     <rule ref="rulesets/java/codesize.xml"/>
 
-    <!--<description>-->
-        <!--Rules which find instances of high or inappropriate coupling between objects and packages.-->
-    <!--</description>-->
+    <description>
+        Rules which find instances of high or inappropriate coupling between objects and packages.
+    </description>
 
     <!--<rule name="CouplingBetweenObjects"-->
           <!--since="1.04"-->

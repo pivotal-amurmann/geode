@@ -7,4 +7,5 @@ engines:
 ratings:
   paths:
   - "**/**.java"
-exclude_paths: []
+exclude_paths:
+  - "**/src/test/"
