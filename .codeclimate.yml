@@ -2,7 +2,10 @@
 engines:
   pmd:
     enabled: true
+    config:
+      file: pmd-rules.xml
 ratings:
   paths:
-  - "**.java"
-exclude_paths: []
+  - "**/**.java"
+exclude_paths:
+  - "**/src/test/"
