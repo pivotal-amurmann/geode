@@ -1,11 +1,9 @@
 ---
-engines:
+plugins:
   pmd:
     enabled: true
     config:
       file: pmd-rules.xml
-ratings:
-  paths:
-  - "**/**.java"
-exclude_paths:
+exclude_patterns:
   - "**/src/test/"
+  - "**/**.js"
