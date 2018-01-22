@@ -2548,7 +2548,7 @@ public class EntryEventImpl
    */
   public long getEventTime(long suggestedTime) {
     long result = suggestedTime;
-    if (this.versionTag != null) {
+    if (this.versionTag != null && getRegion().getConcurrencyChecksEnabled()) {
       if (suggestedTime != 0) {
         this.versionTag.setVersionTimeStamp(suggestedTime);
       } else {
