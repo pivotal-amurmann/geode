@@ -6444,6 +6444,11 @@ public class LocalRegion extends AbstractRegion implements LoaderHelperFactory,
     return txMgr.isTransactionPaused();
   }
 
+  private boolean isJTAPaused() {
+    TXManagerImpl txMgr = (TXManagerImpl) getCache().getCacheTransactionManager();
+    return txMgr.isJTAPaused();
+  }
+
   /**
    * @return true if a transaction is in process
    * @since GemFire tx
@@ -8329,7 +8334,7 @@ public class LocalRegion extends AbstractRegion implements LoaderHelperFactory,
               || jtaTransaction.getStatus() == Status.STATUS_NO_TRANSACTION) {
             return null;
           }
-          if (isTransactionPaused()) {
+          if (isTransactionPaused() || isJTAPaused()) {
             // Do not bootstrap JTA again, if the transaction has been paused.
             return null;
           }
