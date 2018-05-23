@@ -963,6 +963,18 @@ public class GemFireCacheImpl implements InternalCache, InternalClientCache, Has
     } // synchronized
   }
 
+  public void reLoadClusterConfiguration() throws IOException, ClassNotFoundException {
+    this.configurationResponse = requestSharedConfiguration();
+    if (this.configurationResponse != null) {
+      ccLoader.deployJarsReceivedFromClusterConfiguration(this.configurationResponse);
+      ccLoader.applyClusterPropertiesConfiguration(this.configurationResponse,
+          this.system.getConfig());
+      ccLoader.applyClusterXmlConfiguration(this, this.configurationResponse,
+          this.system.getConfig().getGroups());
+      initializeDeclarativeCache();
+    }
+  }
+
   /**
    * Initialize the EventTracker's timer task. This is stored for tracking and shutdown purposes
    */

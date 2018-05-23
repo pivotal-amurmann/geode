@@ -1050,6 +1050,11 @@ public class CacheCreation implements InternalCache {
   }
 
   @Override
+  public void reLoadClusterConfiguration() throws IOException, ClassNotFoundException {
+    throw new UnsupportedOperationException(LocalizedStrings.SHOULDNT_INVOKE.toLocalizedString());
+  }
+
+  @Override
   public SecurityService getSecurityService() {
     return SecurityServiceFactory.create();
   }
