@@ -75,6 +75,7 @@ import org.apache.geode.cache.execute.ResultCollector;
 import org.apache.geode.distributed.DistributedLockService;
 import org.apache.geode.distributed.DistributedMember;
 import org.apache.geode.distributed.DistributedSystem;
+import org.apache.geode.distributed.LockServiceDestroyedException;
 import org.apache.geode.distributed.internal.locks.DLockService;
 import org.apache.geode.internal.cache.InternalCache;
 import org.apache.geode.internal.cache.InternalRegionArguments;
@@ -586,20 +587,6 @@ public class ClusterConfigurationService {
     return getConfigurationRegion().get(groupName);
   }
 
-  public void setConfiguration(String groupName, Configuration configuration) {
-    getConfigurationRegion().put(groupName, configuration);
-  }
-
-  public boolean hasXmlConfiguration() {
-    Region<String, Configuration> configRegion = getConfigurationRegion();
-    return configRegion.values().stream().anyMatch(c -> c.getCacheXmlContent() != null);
-  }
-
-  public Map<String, Configuration> getEntireConfiguration() {
-    Set<String> keys = getConfigurationRegion().keySet();
-    return getConfigurationRegion().getAll(keys);
-  }
-
   /**
    * Returns the path of Shared configuration directory
    *
@@ -691,7 +678,6 @@ public class ClusterConfigurationService {
     FileUtils.writeStringToFile(xmlFile, configuration.getCacheXmlContent(), "UTF-8");
   }
 
-  // TODO: return value is never used
   public boolean lockSharedConfiguration() {
     return this.sharedConfigLockingService.lock(SHARED_CONFIG_LOCK_NAME, -1, -1);
   }
