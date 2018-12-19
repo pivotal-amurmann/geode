@@ -238,6 +238,11 @@ public class LonerDistributionManager implements DM {
 
   public void removeAllMembershipListener(MembershipListener l) {}
 
+  @Override
+  public Collection<MembershipListener> getMembershipListeners() {
+    return Collections.emptySet();
+  }
+
   public void addAdminConsole(InternalDistributedMember p_id) {}
 
   public DMStats getStats() {

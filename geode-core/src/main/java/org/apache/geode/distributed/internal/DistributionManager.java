@@ -2108,6 +2108,11 @@ public class DistributionManager implements DM {
     this.membershipListeners.remove(l);
   }
 
+  @Override
+  public Collection<MembershipListener> getMembershipListeners() {
+    return Collections.unmodifiableSet(this.membershipListeners.keySet());
+  }
+
   /**
    * Adds a <code>MembershipListener</code> to this distribution manager.
    */
