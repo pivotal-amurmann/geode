@@ -26,11 +26,11 @@ import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpSession;
 
-import org.awaitility.Awaitility;
 import org.apache.juli.logging.Log;
+import org.awaitility.Awaitility;
 import org.junit.Rule;
-import org.junit.experimental.categories.Category;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 
 import org.apache.geode.cache.Cache;
@@ -95,7 +95,8 @@ public class ClientServerSessionCacheDUnitTest extends JUnit4CacheTestCase {
     server1.invoke(this::startCacheServer);
 
     // Session region may be created asynchronously on the second server
-    server1.invoke(() -> Awaitility.waitAtMost(5 * 60, TimeUnit.SECONDS).until(this::validateServer));
+    server1
+        .invoke(() -> Awaitility.waitAtMost(5 * 60, TimeUnit.SECONDS).until(this::validateServer));
   }
 
   @Test
@@ -127,7 +128,8 @@ public class ClientServerSessionCacheDUnitTest extends JUnit4CacheTestCase {
     client.invoke(this::startClientSessionCache);
     server1.invoke(this::startCacheServer);
 
-    server1.invoke(() -> Awaitility.waitAtMost(5 * 60, TimeUnit.SECONDS).until(this::validateBootstrapped));
+    server1.invoke(
+        () -> Awaitility.waitAtMost(5 * 60, TimeUnit.SECONDS).until(this::validateBootstrapped));
 
     // server1 should not have created the session region
     // If the user precreated the region, they must manually
@@ -191,8 +193,7 @@ public class ClientServerSessionCacheDUnitTest extends JUnit4CacheTestCase {
   private void validateBootstrapped() {
     final InternalCache cache = getCache();
 
-    final DM distributionManager =
-        cache.getInternalDistributedSystem().getDistributionManager();
+    final DM distributionManager = cache.getInternalDistributedSystem().getDistributionManager();
     final Collection<MembershipListener> listeners = distributionManager.getMembershipListeners();
     assertThat(listeners).filteredOn(listener -> listener instanceof BootstrappingFunction)
         .hasSize(1);
