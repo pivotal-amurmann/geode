@@ -263,7 +263,7 @@ public class AutoConnectionSourceImplJUnitTest {
       }
     });
 
-    assertEquals("1.1.1.1", listenerEvents[0].getMember().getHost());
+    assertNotNull(listenerEvents[0].getMember().getHost());
 
     InetAddress addr = InetAddress.getLocalHost();
     location = new ServerLocation(addr.getHostAddress(), 0);
